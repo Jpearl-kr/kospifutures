@@ -115,7 +115,7 @@
       applyQuote('tKospi', q.kospi, 2);
       applyQuote('tKosdaq', q.kosdaq, 2);
       applyQuote('tUsdKrw', q.usdkrw, 2);
-      applyQuote('tNikkei', q.nikkei225, 2);
+      applyQuote('tUsSemi', q.ussemi, 2);
       setText('tickerSync', 'Updated ' + stamp);
 
       // Range & volatility context for KOSPI 200
