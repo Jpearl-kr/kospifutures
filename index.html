@@ -65,33 +65,33 @@
 
     <section class="hero">
       <div class="hero-main">
-        <h1>KOSPI 200 Futures</h1>
+        <h1>KOSPI 200 Index</h1>
         <div class="hero-price">
-          <span class="price" id="mainPrice">342.15</span>
-          <span class="change down" id="mainChange">-3.25&nbsp;(-0.94%)</span>
+          <span class="price" id="mainPrice">—</span>
+          <span class="change" id="mainChange"></span>
         </div>
-        <p class="timestamp">Aug/18/2026 15:30 KST · <span class="sample-tag">Sample data</span></p>
+        <p class="timestamp" id="heroTimestamp">Loading…</p>
       </div>
       <div class="hero-ticker" aria-label="Related market snapshot">
         <div class="ticker-item">
           <span class="ticker-name">KOSPI</span>
-          <span class="ticker-value">3,412.08</span>
-          <span class="ticker-change down">-0.87%</span>
+          <span class="ticker-value" id="tKospiValue">—</span>
+          <span class="ticker-change" id="tKospiChange"></span>
         </div>
         <div class="ticker-item">
           <span class="ticker-name">KOSDAQ</span>
-          <span class="ticker-value">812.40</span>
-          <span class="ticker-change up">+0.32%</span>
+          <span class="ticker-value" id="tKosdaqValue">—</span>
+          <span class="ticker-change" id="tKosdaqChange"></span>
         </div>
         <div class="ticker-item">
           <span class="ticker-name">USD/KRW</span>
-          <span class="ticker-value">1,362.50</span>
-          <span class="ticker-change up">+0.15%</span>
+          <span class="ticker-value" id="tUsdKrwValue">—</span>
+          <span class="ticker-change" id="tUsdKrwChange"></span>
         </div>
         <div class="ticker-item">
-          <span class="ticker-name">VKOSPI</span>
-          <span class="ticker-value">18.92</span>
-          <span class="ticker-change up">+4.11%</span>
+          <span class="ticker-name">Nikkei 225</span>
+          <span class="ticker-value" id="tNikkeiValue">—</span>
+          <span class="ticker-change" id="tNikkeiChange"></span>
         </div>
       </div>
     </section>
@@ -107,8 +107,8 @@
             <span class="light yellow"></span>
             <span class="light green active"></span>
           </div>
-          <h3>Short-Term Signal <span class="ko">단기신호</span></h3>
-          <p class="signal-updated">Updated Aug/18/2026</p>
+          <h3>Short-Term Signal</h3>
+          <p class="signal-updated" id="signalUpdatedShort">Updated —</p>
         </article>
 
         <article class="signal-card">
@@ -116,8 +116,8 @@
             <span class="light red active"></span>
             <span class="light green"></span>
           </div>
-          <h3>Medium-Term Signal <span class="ko">중기신호</span></h3>
-          <p class="signal-updated">Updated Aug/18/2026</p>
+          <h3>Medium-Term Signal</h3>
+          <p class="signal-updated" id="signalUpdatedMedium">Updated —</p>
         </article>
 
         <article class="signal-card">
@@ -126,8 +126,8 @@
             <span class="light yellow active"></span>
             <span class="light green"></span>
           </div>
-          <h3>Long-Term Signal <span class="ko">장기신호</span></h3>
-          <p class="signal-updated">Updated Aug/18/2026</p>
+          <h3>Long-Term Signal</h3>
+          <p class="signal-updated" id="signalUpdatedLong">Updated —</p>
         </article>
 
       </div>
@@ -140,15 +140,16 @@
           <h2>Current Values</h2>
           <table class="data-table">
             <thead>
-              <tr><th>Contract</th><th>Last</th><th>Change</th><th>%</th></tr>
+              <tr><th>Index</th><th>Last</th><th>Change</th><th>%</th></tr>
             </thead>
-            <tbody>
-              <tr><td>KOSPI 200 Futures (Front Month)</td><td>342.15</td><td class="down">-3.25</td><td class="down">-0.94%</td></tr>
-              <tr><td>KOSPI 200 Options ATM IV</td><td>16.4%</td><td class="up">+0.8pt</td><td class="up">+5.13%</td></tr>
-              <tr><td>Mini KOSPI 200 Futures</td><td>342.10</td><td class="down">-3.20</td><td class="down">-0.93%</td></tr>
+            <tbody id="dataTableBody">
+              <tr><td>KOSPI 200</td><td id="dvKospi200Value">—</td><td id="dvKospi200Change">—</td><td id="dvKospi200Pct">—</td></tr>
+              <tr><td>KOSPI</td><td id="dvKospiValue">—</td><td id="dvKospiChange">—</td><td id="dvKospiPct">—</td></tr>
+              <tr><td>KOSDAQ</td><td id="dvKosdaqValue">—</td><td id="dvKosdaqChange">—</td><td id="dvKosdaqPct">—</td></tr>
+              <tr><td>USD/KRW</td><td id="dvUsdKrwValue">—</td><td id="dvUsdKrwChange">—</td><td id="dvUsdKrwPct">—</td></tr>
             </tbody>
           </table>
-          <p class="sample-tag">Sample data — connect to a live feed to update</p>
+          <p class="sample-tag" id="dataAsOf">Loading…</p>
         </div>
 
         <div class="panel" id="news">
@@ -171,10 +172,10 @@
         <div class="panel">
           <h3>Related Indices</h3>
           <ul class="mini-index-list">
-            <li><span>KOSPI</span><span class="down">3,412.08 (-0.87%)</span></li>
-            <li><span>KOSDAQ</span><span class="up">812.40 (+0.32%)</span></li>
-            <li><span>Nikkei 225</span><span class="down">67,671.80 (-2.24%)</span></li>
-            <li><span>S&amp;P 500</span><span class="up">5,842.10 (+0.41%)</span></li>
+            <li><span>KOSPI</span><span id="riKospi">—</span></li>
+            <li><span>KOSDAQ</span><span id="riKosdaq">—</span></li>
+            <li><span>Nikkei 225</span><span id="riNikkei">—</span></li>
+            <li><span>S&amp;P 500</span><span id="riSp500">—</span></li>
           </ul>
         </div>
 

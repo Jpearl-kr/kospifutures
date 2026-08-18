@@ -251,12 +251,6 @@ main {
   font-size: 1rem;
   margin-bottom: .25rem;
 }
-.signal-card h3 .ko {
-  display: block;
-  font-size: .8rem;
-  font-weight: 400;
-  color: var(--text-muted);
-}
 
 .signal-state {
   font-size: 1.1rem;
