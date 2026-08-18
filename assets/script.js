@@ -92,17 +92,6 @@
     }
   }
 
-  function applyRelated(id, quote, digits) {
-    digits = digits || 2;
-    var el = document.getElementById(id);
-    if (!el) return;
-    if (!quote) { el.textContent = 'N/A'; return; }
-    el.textContent = fmtNumber(quote.price, digits) + ' (' + fmtPercent(quote.changePercent) + ')';
-    el.classList.remove('up', 'down');
-    if (quote.change > 0) el.classList.add('up');
-    else if (quote.change < 0) el.classList.add('down');
-  }
-
   fetch('/api/quotes')
     .then(function (res) { return res.json(); })
     .then(function (data) {
@@ -127,7 +116,7 @@
       applyQuote('tKosdaq', q.kosdaq, 2);
       applyQuote('tUsdKrw', q.usdkrw, 2);
       applyQuote('tNikkei', q.nikkei225, 2);
-      setText('tickerSync', 'KOSPI, KOSDAQ, USD/KRW & Nikkei 225 refreshed together with the figure above');
+      setText('tickerSync', 'Updated ' + stamp);
 
       // Range & volatility context for KOSPI 200
       if (q.kospi200) {
@@ -141,12 +130,6 @@
         }
       }
       setText('dataAsOf', 'Data as of ' + stamp + ' — source: Yahoo Finance');
-
-      // Related indices
-      applyRelated('riKospi', q.kospi, 2);
-      applyRelated('riKosdaq', q.kosdaq, 2);
-      applyRelated('riNikkei', q.nikkei225, 2);
-      applyRelated('riSp500', q.sp500, 2);
 
       // Signal cards: timestamp only, states remain a sample until the
       // signal methodology is implemented.

@@ -4,7 +4,6 @@ const SYMBOLS = {
   kospi200: '^KS200',
   usdkrw: 'KRW=X',
   nikkei225: '^N225',
-  sp500: '^GSPC',
 };
 
 async function fetchQuote(symbol) {
