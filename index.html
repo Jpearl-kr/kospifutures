@@ -102,7 +102,11 @@
       <div class="signal-grid">
 
         <article class="signal-card">
-          <div class="signal-dot green" aria-hidden="true"></div>
+          <div class="traffic-light" role="img" aria-label="Short-term signal: Bullish (green)">
+            <span class="light red"></span>
+            <span class="light yellow"></span>
+            <span class="light green active"></span>
+          </div>
           <h3>Short-Term Signal <span class="ko">단기신호</span></h3>
           <p class="signal-state">Bullish</p>
           <p class="signal-desc">Red / Yellow / Green — reflects momentum over the coming days.</p>
@@ -110,7 +114,10 @@
         </article>
 
         <article class="signal-card">
-          <div class="signal-dot red" aria-hidden="true"></div>
+          <div class="traffic-light" role="img" aria-label="Medium-term signal: Bearish (red)">
+            <span class="light red active"></span>
+            <span class="light green"></span>
+          </div>
           <h3>Medium-Term Signal <span class="ko">중기신호</span></h3>
           <p class="signal-state">Bearish</p>
           <p class="signal-desc">Red / Green — reflects the multi-week trend.</p>
@@ -118,7 +125,11 @@
         </article>
 
         <article class="signal-card">
-          <div class="signal-dot yellow" aria-hidden="true"></div>
+          <div class="traffic-light" role="img" aria-label="Long-term signal: Neutral (yellow)">
+            <span class="light red"></span>
+            <span class="light yellow active"></span>
+            <span class="light green"></span>
+          </div>
           <h3>Long-Term Signal <span class="ko">장기신호</span></h3>
           <p class="signal-state">Neutral</p>
           <p class="signal-desc">Red / Yellow / Green — reflects the multi-month outlook.</p>

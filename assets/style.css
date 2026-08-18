@@ -215,15 +215,37 @@ main {
   text-align: center;
 }
 
-.signal-dot {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+.traffic-light {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #22262f;
+  border-radius: 10px;
+  padding: 10px;
   margin: 0 auto .75rem;
 }
-.signal-dot.red { background: var(--red); }
-.signal-dot.yellow { background: var(--yellow); }
-.signal-dot.green { background: var(--green); }
+
+.light {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+}
+.light.red { background: rgba(217, 45, 32, .25); }
+.light.yellow { background: rgba(242, 169, 0, .25); }
+.light.green { background: rgba(22, 163, 74, .25); }
+
+.light.red.active {
+  background: var(--red);
+  box-shadow: 0 0 10px 3px rgba(217, 45, 32, .8);
+}
+.light.yellow.active {
+  background: var(--yellow);
+  box-shadow: 0 0 10px 3px rgba(242, 169, 0, .8);
+}
+.light.green.active {
+  background: var(--green);
+  box-shadow: 0 0 10px 3px rgba(22, 163, 74, .8);
+}
 
 .signal-card h3 {
   font-size: 1rem;
