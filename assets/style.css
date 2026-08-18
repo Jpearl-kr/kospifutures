@@ -169,6 +169,14 @@ main {
   margin: .25rem 0 1.25rem;
 }
 
+.options-note {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin: .75rem 0 0;
+  padding-top: .75rem;
+  border-top: 1px dashed var(--border);
+}
+
 .sample-tag {
   display: inline-block;
   font-size: .75rem;
@@ -185,6 +193,12 @@ main {
   gap: 1rem;
   border-top: 1px solid var(--border);
   padding-top: 1rem;
+}
+
+.sync-note {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin: .5rem 0 0;
 }
 
 .ticker-item {

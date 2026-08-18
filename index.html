@@ -40,9 +40,9 @@
         <li><a href="#signals">Long-Term Signal</a></li>
       </ul>
 
-      <p class="sidebar-title">Futures Data</p>
+      <p class="sidebar-title">Market Data</p>
       <ul>
-        <li><a href="#data">Current Values</a></li>
+        <li><a href="#data">Range &amp; Volatility</a></li>
         <li><a href="#data">Related Indices</a></li>
       </ul>
 
@@ -94,6 +94,7 @@
           <span class="ticker-change" id="tNikkeiChange"></span>
         </div>
       </div>
+      <p class="sync-note" id="tickerSync">Loading…</p>
     </section>
 
     <section class="signals" id="signals">
@@ -137,19 +138,17 @@
       <div class="content-main">
 
         <div class="panel">
-          <h2>Current Values</h2>
+          <h2>KOSPI 200 — Range &amp; Volatility</h2>
           <table class="data-table">
-            <thead>
-              <tr><th>Index</th><th>Last</th><th>Change</th><th>%</th></tr>
-            </thead>
-            <tbody id="dataTableBody">
-              <tr><td>KOSPI 200</td><td id="dvKospi200Value">—</td><td id="dvKospi200Change">—</td><td id="dvKospi200Pct">—</td></tr>
-              <tr><td>KOSPI</td><td id="dvKospiValue">—</td><td id="dvKospiChange">—</td><td id="dvKospiPct">—</td></tr>
-              <tr><td>KOSDAQ</td><td id="dvKosdaqValue">—</td><td id="dvKosdaqChange">—</td><td id="dvKosdaqPct">—</td></tr>
-              <tr><td>USD/KRW</td><td id="dvUsdKrwValue">—</td><td id="dvUsdKrwChange">—</td><td id="dvUsdKrwPct">—</td></tr>
+            <tbody>
+              <tr><td>Day Range</td><td id="rvDayRange">—</td></tr>
+              <tr><td>52-Week Range</td><td id="rvWeekRange">—</td></tr>
+              <tr><td>Volume</td><td id="rvVolume">—</td></tr>
+              <tr><td>vs. 52-Week High</td><td id="rvFromHigh">—</td></tr>
             </tbody>
           </table>
           <p class="sample-tag" id="dataAsOf">Loading…</p>
+          <p class="options-note">Options analytics (implied volatility, put/call ratio, open interest) require a licensed KRX data feed and aren't wired up yet — this section will expand once that's connected.</p>
         </div>
 
         <div class="panel" id="news">

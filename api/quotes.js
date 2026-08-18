@@ -22,7 +22,16 @@ async function fetchQuote(symbol) {
   const prevClose = meta.chartPreviousClose ?? meta.previousClose;
   const change = prevClose ? price - prevClose : null;
   const changePercent = prevClose ? (change / prevClose) * 100 : null;
-  return { price, change, changePercent };
+  return {
+    price,
+    change,
+    changePercent,
+    dayHigh: meta.regularMarketDayHigh ?? null,
+    dayLow: meta.regularMarketDayLow ?? null,
+    weekHigh52: meta.fiftyTwoWeekHigh ?? null,
+    weekLow52: meta.fiftyTwoWeekLow ?? null,
+    volume: meta.regularMarketVolume ?? null,
+  };
 }
 
 module.exports = async (req, res) => {

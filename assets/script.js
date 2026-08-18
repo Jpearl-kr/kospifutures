@@ -120,17 +120,26 @@
       }
       setText('heroTimestamp', stamp);
 
-      // Ticker row
+      // Ticker row — fetched in the same request as the headline figure,
+      // so call out that they're all in sync rather than repeating the
+      // timestamp four more times.
       applyQuote('tKospi', q.kospi, 2);
       applyQuote('tKosdaq', q.kosdaq, 2);
       applyQuote('tUsdKrw', q.usdkrw, 2);
       applyQuote('tNikkei', q.nikkei225, 2);
+      setText('tickerSync', 'KOSPI, KOSDAQ, USD/KRW & Nikkei 225 refreshed together with the figure above');
 
-      // Current values table
-      applyQuote('dvKospi200', q.kospi200, 2);
-      applyQuote('dvKospi', q.kospi, 2);
-      applyQuote('dvKosdaq', q.kosdaq, 2);
-      applyQuote('dvUsdKrw', q.usdkrw, 2);
+      // Range & volatility context for KOSPI 200
+      if (q.kospi200) {
+        var k = q.kospi200;
+        setText('rvDayRange', fmtNumber(k.dayLow, 2) + ' – ' + fmtNumber(k.dayHigh, 2));
+        setText('rvWeekRange', fmtNumber(k.weekLow52, 2) + ' – ' + fmtNumber(k.weekHigh52, 2));
+        setText('rvVolume', k.volume ? Math.round(k.volume).toLocaleString('en-US') : '—');
+        if (k.weekHigh52) {
+          var fromHigh = ((k.price - k.weekHigh52) / k.weekHigh52) * 100;
+          setText('rvFromHigh', fmtPercent(fromHigh) + ' from 52-wk high');
+        }
+      }
       setText('dataAsOf', 'Data as of ' + stamp + ' — source: Yahoo Finance');
 
       // Related indices
