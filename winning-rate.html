@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Winning Rate of the Day — KOSPI Futures</title>
+<meta name="description" content="How often KOSPI 200 closes up vs. down, broken down by weekday and month.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html#home">KOSPI <strong>FUTURES</strong></a>
+  <nav class="top-nav" aria-label="Primary">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#about">About</a>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Section">
+      <p class="sidebar-title">Market Overview</p>
+      <ul>
+        <li><a href="index.html#home">Home</a></li>
+      </ul>
+
+      <p class="sidebar-title">Trading Signals</p>
+      <ul>
+        <li><a href="index.html#signals">Trading Signals</a></li>
+      </ul>
+
+      <p class="sidebar-title">Market Data</p>
+      <ul>
+        <li><a href="index.html#data">Range &amp; Volatility</a></li>
+        <li><a href="daily-summary.html">Daily Summary</a></li>
+        <li><a href="historical-data.html">Historical Data</a></li>
+        <li><a href="index.html#news">KRX Derivatives Statistics</a></li>
+      </ul>
+
+      <p class="sidebar-title">Archives</p>
+      <ul>
+        <li><a href="records.html">Records</a></li>
+        <li><a href="winning-rate.html">Winning Rate of the Day</a></li>
+      </ul>
+
+      <p class="sidebar-title">Tools</p>
+      <ul>
+        <li><a href="stock-finder.html">Stock Finder</a></li>
+        <li><a href="economic-calendar.html">Economic Calendar</a></li>
+      </ul>
+
+      <p class="sidebar-title">Resources</p>
+      <ul>
+        <li><a href="index.html#news">News &amp; Release</a></li>
+        <li><a href="index.html#methodology">Signal Methodology</a></li>
+        <li><a href="index.html#faq">FAQ</a></li>
+      </ul>
+
+      <p class="sidebar-title">Support</p>
+      <ul>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <section class="page-header">
+      <h1>KOSPI 200 — Winning Rate of the Day</h1>
+      <p class="section-sub" id="wrRangeNote">Loading…</p>
+    </section>
+
+    <section class="content-grid">
+      <div class="content-main" style="grid-column: 1 / -1;">
+
+        <div class="panel">
+          <h2>Overall</h2>
+          <p class="signal-state" id="wrOverall">—</p>
+        </div>
+
+        <div class="panel">
+          <h2>By Weekday</h2>
+          <table class="data-table">
+            <thead>
+              <tr><th>Day</th><th>Up Days</th><th>Down Days</th><th>Win Rate</th></tr>
+            </thead>
+            <tbody id="wrWeekdayBody">
+              <tr><td colspan="4">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h2>By Month</h2>
+          <table class="data-table">
+            <thead>
+              <tr><th>Month</th><th>Up Days</th><th>Down Days</th><th>Win Rate</th></tr>
+            </thead>
+            <tbody id="wrMonthBody">
+              <tr><td colspan="4">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <nav aria-label="Footer">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#methodology">Methodology</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#contact">Contact</a>
+  </nav>
+  <p class="disclaimer">Market data shown is for informational purposes only and is not investment advice. Past patterns do not predict future results.</p>
+  <p class="copyright">&copy; 2026 KOSPI Futures. All rights reserved.</p>
+</footer>
+
+<script src="assets/nav.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/winning-rate.js"></script>
+</body>
+</html>

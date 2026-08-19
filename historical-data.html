@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historical Data — KOSPI Futures</title>
+<meta name="description" content="KOSPI 200 daily historical price data, viewable and downloadable as CSV.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html#home">KOSPI <strong>FUTURES</strong></a>
+  <nav class="top-nav" aria-label="Primary">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#about">About</a>
+  </nav>
+</header>
+
+<div class="layout">
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Section">
+      <p class="sidebar-title">Market Overview</p>
+      <ul>
+        <li><a href="index.html#home">Home</a></li>
+      </ul>
+
+      <p class="sidebar-title">Trading Signals</p>
+      <ul>
+        <li><a href="index.html#signals">Trading Signals</a></li>
+      </ul>
+
+      <p class="sidebar-title">Market Data</p>
+      <ul>
+        <li><a href="index.html#data">Range &amp; Volatility</a></li>
+        <li><a href="daily-summary.html">Daily Summary</a></li>
+        <li><a href="historical-data.html">Historical Data</a></li>
+        <li><a href="index.html#news">KRX Derivatives Statistics</a></li>
+      </ul>
+
+      <p class="sidebar-title">Archives</p>
+      <ul>
+        <li><a href="records.html">Records</a></li>
+        <li><a href="winning-rate.html">Winning Rate of the Day</a></li>
+      </ul>
+
+      <p class="sidebar-title">Tools</p>
+      <ul>
+        <li><a href="stock-finder.html">Stock Finder</a></li>
+        <li><a href="economic-calendar.html">Economic Calendar</a></li>
+      </ul>
+
+      <p class="sidebar-title">Resources</p>
+      <ul>
+        <li><a href="index.html#news">News &amp; Release</a></li>
+        <li><a href="index.html#methodology">Signal Methodology</a></li>
+        <li><a href="index.html#faq">FAQ</a></li>
+      </ul>
+
+      <p class="sidebar-title">Support</p>
+      <ul>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+    <section class="page-header">
+      <h1>KOSPI 200 — Historical Data</h1>
+      <p class="section-sub">Daily open, high, low, close, and volume for the most recent trading days.</p>
+    </section>
+
+    <section class="content-grid">
+      <div class="content-main" style="grid-column: 1 / -1;">
+
+        <div class="panel">
+          <div class="panel-header-row">
+            <h2>Last 60 Trading Days</h2>
+            <button class="btn-secondary" id="histDownloadBtn">Download CSV</button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Date</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Change</th><th>Volume</th></tr>
+              </thead>
+              <tbody id="histTableBody">
+                <tr><td colspan="7">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="sample-tag" id="histAsOf">Loading…</p>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <nav aria-label="Footer">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#methodology">Methodology</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#contact">Contact</a>
+  </nav>
+  <p class="disclaimer">Market data shown is for informational purposes only and is not investment advice.</p>
+  <p class="copyright">&copy; 2026 KOSPI Futures. All rights reserved.</p>
+</footer>
+
+<script src="assets/nav.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/historical-data.js"></script>
+</body>
+</html>

@@ -7,9 +7,10 @@ const SYMBOLS = {
 };
 
 async function fetchQuote(symbol) {
-  // A 10-day window (not 5d) so the previous-close lookup below still
-  // finds a real prior trading day across long weekends/holidays.
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=10d`;
+  // 3mo (not 10d) so the previous-close lookup below reliably finds a
+  // real prior trading day — some symbols (e.g. ^KS200) only return a
+  // single candle from this endpoint for short ranges like 5d/10d/1mo.
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=3mo`;
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; kospifutures-site/1.0)' },
   });
