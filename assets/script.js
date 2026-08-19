@@ -133,7 +133,7 @@
 
       // Signal cards: timestamp only, states remain a sample until the
       // signal methodology is implemented.
-      var signalStamp = 'Updated ' + stamp + ' (sample signal)';
+      var signalStamp = 'Updated ' + stamp;
       setText('signalUpdatedShort', signalStamp);
       setText('signalUpdatedMedium', signalStamp);
       setText('signalUpdatedLong', signalStamp);

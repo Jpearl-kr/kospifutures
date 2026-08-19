@@ -9,8 +9,30 @@
   --red: #d92d20;
   --yellow: #f2a900;
   --green: #16a34a;
+  --light-red-dim: #f3b4b4;
+  --light-yellow-dim: #f3dd9e;
+  --light-green-dim: #a8e0bb;
+  --tl-housing-bg: #ffffff;
+  --tl-housing-border: #d8dce2;
   --sidebar-w: 240px;
   --header-h: 56px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151d;
+    --bg-alt: #1a1e29;
+    --border: #2b3140;
+    --text: #e8ebf0;
+    --text-muted: #8a92a3;
+    --primary: #6ea8ff;
+    --primary-dark: #a9c8ff;
+    --light-red-dim: #8a4a4a;
+    --light-yellow-dim: #9c8442;
+    --light-green-dim: #4a7a5c;
+    --tl-housing-bg: #1c2130;
+    --tl-housing-border: #3a4256;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -232,33 +254,38 @@ main {
 .traffic-light {
   display: inline-flex;
   flex-direction: row;
-  gap: 8px;
-  background: #eef0f3;
-  border-radius: 10px;
-  padding: 10px;
+  align-items: center;
+  gap: 10px;
+  background: var(--tl-housing-bg);
+  border: 1.5px solid var(--tl-housing-border);
+  border-radius: 999px;
+  padding: 10px 16px;
   margin: 0 auto .75rem;
 }
 
 .light {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
 }
-.light.red { background: rgba(217, 45, 32, .25); }
-.light.yellow { background: rgba(242, 169, 0, .25); }
-.light.green { background: rgba(22, 163, 74, .25); }
+/* Solid, theme-tuned "dim" colors rather than a translucent overlay —
+   an alpha-blended dot picks up the housing color behind it, so it
+   reads fine in light mode but goes muddy/dead against a dark one. */
+.light.red { background: var(--light-red-dim); }
+.light.yellow { background: var(--light-yellow-dim); }
+.light.green { background: var(--light-green-dim); }
 
 .light.red.active {
   background: var(--red);
-  box-shadow: 0 0 10px 3px rgba(217, 45, 32, .8);
+  box-shadow: 0 0 22px 5px rgba(217, 45, 32, .65), 0 0 6px 1px rgba(217, 45, 32, .9);
 }
 .light.yellow.active {
   background: var(--yellow);
-  box-shadow: 0 0 10px 3px rgba(242, 169, 0, .8);
+  box-shadow: 0 0 22px 5px rgba(242, 169, 0, .65), 0 0 6px 1px rgba(242, 169, 0, .9);
 }
 .light.green.active {
   background: var(--green);
-  box-shadow: 0 0 10px 3px rgba(22, 163, 74, .8);
+  box-shadow: 0 0 22px 5px rgba(22, 163, 74, .65), 0 0 6px 1px rgba(22, 163, 74, .9);
 }
 
 .signal-card h3 {
