@@ -7,10 +7,10 @@
   --primary: #0b3d91;
   --primary-dark: #082a66;
   --red: #d92d20;
-  --yellow: #f5c518;
+  --yellow: #ffcc00;
   --green: #16a34a;
   --light-red-dim: #f3b4b4;
-  --light-yellow-dim: #f3e29e;
+  --light-yellow-dim: #ffe680;
   --light-green-dim: #a8e0bb;
   --tl-housing-bg: #ffffff;
   --tl-housing-border: #d8dce2;
@@ -28,7 +28,7 @@
     --primary: #6ea8ff;
     --primary-dark: #a9c8ff;
     --light-red-dim: #dd8480;
-    --light-yellow-dim: #ddc073;
+    --light-yellow-dim: #e6c558;
     --light-green-dim: #7fbf98;
     --tl-housing-bg: #1c2130;
     --tl-housing-border: #3a4256;
@@ -281,7 +281,7 @@ main {
 }
 .light.yellow.active {
   background: var(--yellow);
-  box-shadow: 0 0 22px 5px rgba(242, 169, 0, .65), 0 0 6px 1px rgba(242, 169, 0, .9);
+  box-shadow: 0 0 22px 5px rgba(255, 204, 0, .65), 0 0 6px 1px rgba(255, 204, 0, .9);
 }
 .light.green.active {
   background: var(--green);
