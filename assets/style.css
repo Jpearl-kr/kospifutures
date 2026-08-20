@@ -80,6 +80,25 @@ h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; }
 }
 .top-nav a { color: var(--text); font-size: .95rem; }
 
+.auth-area { display: flex; align-items: center; }
+.auth-user { display: flex; align-items: center; gap: .5rem; }
+.auth-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+.auth-name {
+  font-size: .85rem;
+  color: var(--text);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .auth-name { display: none; }
+}
+
 .nav-toggle {
   display: none;
   flex-direction: column;
