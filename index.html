@@ -77,53 +77,35 @@
   <main id="home">
 
     <section class="hero">
-      <div class="hero-flex">
-
-        <div class="hero-ring-card">
-          <div class="ring-gauge up" id="ringGauge" aria-hidden="true"></div>
-          <div class="ring-content">
-            <h1>KOSPI 200 Index</h1>
-            <div class="price" id="mainPrice">—</div>
-            <div class="change" id="mainChange"></div>
-            <p class="timestamp" id="heroTimestamp">Loading…</p>
-          </div>
+      <div class="hero-main">
+        <h1>KOSPI 200 Index</h1>
+        <div class="hero-price">
+          <span class="price" id="mainPrice">—</span>
+          <span class="change" id="mainChange"></span>
         </div>
-
-        <div class="ticker-cards" aria-label="Related market snapshot">
-          <div class="ticker-card">
-            <div class="ticker-card-info">
-              <span class="ticker-name">KOSPI</span>
-              <span class="ticker-value" id="tKospiValue">—</span>
-              <span class="ticker-change" id="tKospiChange"></span>
-            </div>
-            <svg class="ticker-spark" id="sparkKospi" viewBox="0 0 90 40" preserveAspectRatio="none"></svg>
-          </div>
-          <div class="ticker-card">
-            <div class="ticker-card-info">
-              <span class="ticker-name">KOSDAQ</span>
-              <span class="ticker-value" id="tKosdaqValue">—</span>
-              <span class="ticker-change" id="tKosdaqChange"></span>
-            </div>
-            <svg class="ticker-spark" id="sparkKosdaq" viewBox="0 0 90 40" preserveAspectRatio="none"></svg>
-          </div>
-          <div class="ticker-card">
-            <div class="ticker-card-info">
-              <span class="ticker-name">USD/KRW</span>
-              <span class="ticker-value" id="tUsdKrwValue">—</span>
-              <span class="ticker-change" id="tUsdKrwChange"></span>
-            </div>
-            <svg class="ticker-spark" id="sparkUsdKrw" viewBox="0 0 90 40" preserveAspectRatio="none"></svg>
-          </div>
-          <div class="ticker-card">
-            <div class="ticker-card-info">
-              <span class="ticker-name">US Semiconductor (SOX)</span>
-              <span class="ticker-value" id="tUsSemiValue">—</span>
-              <span class="ticker-change" id="tUsSemiChange"></span>
-            </div>
-            <svg class="ticker-spark" id="sparkUsSemi" viewBox="0 0 90 40" preserveAspectRatio="none"></svg>
-          </div>
+        <p class="timestamp" id="heroTimestamp">Loading…</p>
+      </div>
+      <div class="hero-ticker" aria-label="Related market snapshot">
+        <div class="ticker-item">
+          <span class="ticker-name">KOSPI</span>
+          <span class="ticker-value" id="tKospiValue">—</span>
+          <span class="ticker-change" id="tKospiChange"></span>
         </div>
-
+        <div class="ticker-item">
+          <span class="ticker-name">KOSDAQ</span>
+          <span class="ticker-value" id="tKosdaqValue">—</span>
+          <span class="ticker-change" id="tKosdaqChange"></span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-name">USD/KRW</span>
+          <span class="ticker-value" id="tUsdKrwValue">—</span>
+          <span class="ticker-change" id="tUsdKrwChange"></span>
+        </div>
+        <div class="ticker-item">
+          <span class="ticker-name">US Semiconductor (SOX)</span>
+          <span class="ticker-value" id="tUsSemiValue">—</span>
+          <span class="ticker-change" id="tUsSemiChange"></span>
+        </div>
       </div>
       <p class="sync-note" id="tickerSync">Loading…</p>
     </section>

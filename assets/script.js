@@ -104,11 +104,6 @@
         setText('mainPrice', fmtNumber(q.kospi200.price, 2));
         setText('mainChange', fmtChange(q.kospi200.change, 2) + ' (' + fmtPercent(q.kospi200.changePercent) + ')');
         setChangeClass('mainChange', q.kospi200.change);
-        var ringGauge = document.getElementById('ringGauge');
-        if (ringGauge) {
-          ringGauge.classList.remove('up', 'down');
-          ringGauge.classList.add(q.kospi200.change < 0 ? 'down' : 'up');
-        }
       } else {
         setText('mainPrice', 'N/A');
       }
@@ -147,44 +142,4 @@
       setText('heroTimestamp', 'Live data unavailable');
       setText('dataAsOf', 'Live data unavailable');
     });
-
-  function renderSparkline(svgId, values) {
-    var svg = document.getElementById(svgId);
-    if (!svg || !values || values.length < 2) return;
-
-    var w = 90, h = 40, pad = 3;
-    var min = Math.min.apply(null, values);
-    var max = Math.max.apply(null, values);
-    var range = max - min || 1;
-    var up = values[values.length - 1] >= values[0];
-    var colorVar = up ? '--green' : '--red';
-    var gradId = svgId + '-fade';
-
-    var points = values.map(function (v, i) {
-      var x = (i / (values.length - 1)) * w;
-      var y = h - pad - ((v - min) / range) * (h - pad * 2);
-      return x.toFixed(1) + ',' + y.toFixed(1);
-    });
-
-    var areaPoints = points.join(' ') + ' ' + w + ',' + h + ' 0,' + h;
-
-    svg.innerHTML =
-      '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" style="stop-color:var(' + colorVar + ');stop-opacity:0.4"></stop>' +
-      '<stop offset="100%" style="stop-color:var(' + colorVar + ');stop-opacity:0"></stop>' +
-      '</linearGradient></defs>' +
-      '<polygon points="' + areaPoints + '" fill="url(#' + gradId + ')" stroke="none"></polygon>' +
-      '<polyline points="' + points.join(' ') + '" fill="none" style="stroke:var(' + colorVar + ')" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"></polyline>';
-  }
-
-  fetch('/api/intraday')
-    .then(function (res) { return res.json(); })
-    .then(function (data) {
-      var s = data.series || {};
-      renderSparkline('sparkKospi', s.kospi);
-      renderSparkline('sparkKosdaq', s.kosdaq);
-      renderSparkline('sparkUsdKrw', s.usdkrw);
-      renderSparkline('sparkUsSemi', s.ussemi);
-    })
-    .catch(function () {});
 })();
