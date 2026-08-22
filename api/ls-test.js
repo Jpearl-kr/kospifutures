@@ -1,0 +1,92 @@
+const REST_BASE = 'https://openapi.ls-sec.co.kr:8080';
+
+async function getToken() {
+  const appkey = process.env.LS_APP_KEY;
+  const appsecretkey = process.env.LS_APP_SECRET;
+  if (!appkey || !appsecretkey) {
+    throw new Error('LS_APP_KEY / LS_APP_SECRET not set');
+  }
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    appkey,
+    appsecretkey,
+    scope: 'oob',
+  });
+  const res = await fetch(REST_BASE + '/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+  const text = await res.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    throw new Error('Token response not JSON: ' + text.slice(0, 300));
+  }
+  if (!res.ok || !json.access_token) {
+    throw new Error('Token error: ' + JSON.stringify(json));
+  }
+  return json.access_token;
+}
+
+async function callTR(token, trCode, accessUrl, inBlock) {
+  const res = await fetch(REST_BASE + accessUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8',
+      authorization: 'Bearer ' + token,
+      tr_cd: trCode,
+      tr_cont: 'N',
+      tr_cont_key: '',
+    },
+    body: JSON.stringify(inBlock),
+  });
+  const text = await res.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch (e) {
+    return { httpStatus: res.status, raw: text.slice(0, 500) };
+  }
+  return { httpStatus: res.status, body: json };
+}
+
+module.exports = async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const which = req.query.which || 't8424';
+  const gubun1 = req.query.gubun1 ?? '';
+  const upcode = req.query.upcode ?? '';
+
+  try {
+    const token = await getToken();
+
+    if (which === 't8424') {
+      const result = await callTR(token, 't8424', '/indtp/market-data', {
+        t8424InBlock: { gubun1 },
+      });
+      res.status(200).json({ which, gubun1, result });
+      return;
+    }
+
+    if (which === 't1511') {
+      const result = await callTR(token, 't1511', '/indtp/market-data', {
+        t1511InBlock: { upcode },
+      });
+      res.status(200).json({ which, upcode, result });
+      return;
+    }
+
+    if (which === 't1516') {
+      const result = await callTR(token, 't1516', '/indtp/market-data', {
+        t1516InBlock: { upcode, gubun: '0', shcode: '' },
+      });
+      res.status(200).json({ which, upcode, result });
+      return;
+    }
+
+    res.status(400).json({ error: 'unknown which=' + which });
+  } catch (err) {
+    res.status(200).json({ error: true, message: String(err && err.message || err) });
+  }
+};
