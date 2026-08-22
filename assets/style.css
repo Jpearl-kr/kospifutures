@@ -46,6 +46,12 @@ html, body {
   line-height: 1.5;
 }
 
+/* Keeps the sticky header from covering the target section when
+   jumping to an in-page anchor (e.g. sidebar links). */
+main, main > section, .panel, #home, #signals, #data, #news, #methodology, #faq, #about, #contact {
+  scroll-margin-top: calc(var(--header-h) + 12px);
+}
+
 a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
@@ -237,7 +243,7 @@ main {
 }
 
 .sync-note {
-  font-size: .75rem;
+  font-size: .875rem;
   color: var(--text-muted);
   margin: .5rem 0 0;
 }

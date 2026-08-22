@@ -1,3 +1,11 @@
+if ('scrollRestoration' in history) {
+  // Without this, some browsers reuse the scroll position from the last
+  // visit to this URL (e.g. tab reuse, back/forward cache) instead of
+  // starting a fresh load at the top.
+  history.scrollRestoration = 'manual';
+  if (!location.hash) window.scrollTo(0, 0);
+}
+
 (function () {
   var toggle = document.getElementById('navToggle');
   var sidebar = document.getElementById('sidebar');
