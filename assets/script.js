@@ -116,7 +116,7 @@
       applyQuote('tKosdaq', q.kosdaq, 2);
       applyQuote('tUsdKrw', q.usdkrw, 2);
       applyQuote('tUsSemi', q.ussemi, 2);
-      setText('tickerSync', 'Updated ' + stamp);
+      setText('tickerSync', stamp);
 
       // Range & volatility context for KOSPI 200
       if (q.kospi200) {
