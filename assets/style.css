@@ -177,67 +177,43 @@ main {
 
 /* Hero */
 .hero {
-  border: 0;
-  border-radius: 10px;
-  padding: clamp(1.75rem, 4vw, 3.5rem);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.5rem;
   margin-bottom: 2rem;
-  color: #fff;
-  background: linear-gradient(120deg, #063968 0%, #0b4d7d 55%, #17628f 100%);
-  box-shadow: 0 10px 24px rgba(5, 42, 81, .14);
-}
-
-.hero-main {
-  display: grid;
-  grid-template-columns: minmax(130px, .72fr) minmax(0, 2.3fr);
-  grid-template-areas:
-    "title price"
-    "time price";
-  column-gap: clamp(1.5rem, 4vw, 4rem);
-  align-items: center;
+  background: var(--bg-alt);
 }
 
 .hero h1 {
-  grid-area: title;
-  align-self: end;
-  font-size: clamp(1.25rem, 2.1vw, 1.8rem);
-  color: rgba(255, 255, 255, .94);
+  font-size: 1.4rem;
+  color: var(--text-muted);
   font-weight: 600;
-  letter-spacing: -.025em;
-  margin: 0;
 }
 
 .hero-price {
-  grid-area: price;
   display: flex;
   align-items: baseline;
-  gap: clamp(.65rem, 1.3vw, 1.2rem);
+  gap: .75rem;
   flex-wrap: wrap;
-  min-width: 0;
 }
 
 .price {
-  font-size: clamp(4rem, 8vw, 7.25rem);
-  font-weight: 650;
-  color: #fff;
-  letter-spacing: -.065em;
-  line-height: .95;
-  font-variant-numeric: tabular-nums;
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .change {
-  font-size: clamp(1rem, 1.6vw, 1.3rem);
+  font-size: 1.25rem;
   font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
 }
-.change.up { color: #91e7b0; }
-.change.down { color: #ffb3aa; }
+.change.up { color: var(--green); }
+.change.down { color: var(--red); }
 
 .timestamp {
-  grid-area: time;
-  color: rgba(255, 255, 255, .68);
-  font-size: .8rem;
-  margin: .4rem 0 0;
+  color: var(--text-muted);
+  font-size: .875rem;
+  margin: .25rem 0 1.25rem;
 }
 
 .options-note {
@@ -261,15 +237,14 @@ main {
 .hero-ticker {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem clamp(1.25rem, 3vw, 2.75rem);
-  border-top: 1px solid rgba(255, 255, 255, .22);
-  margin-top: clamp(1.75rem, 3vw, 2.75rem);
-  padding-top: 1.1rem;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
 }
 
 .sync-note {
   font-size: .875rem;
-  color: rgba(255, 255, 255, .66);
+  color: var(--text-muted);
   margin: .5rem 0 0;
 }
 
@@ -278,11 +253,11 @@ main {
   flex-direction: column;
   min-width: 110px;
 }
-.ticker-name { font-size: .72rem; color: rgba(255, 255, 255, .65); letter-spacing: .04em; }
-.ticker-value { font-size: 1.05rem; font-weight: 650; color: #fff; font-variant-numeric: tabular-nums; }
+.ticker-name { font-size: .75rem; color: var(--text-muted); }
+.ticker-value { font-size: 1rem; font-weight: 600; }
 .ticker-change { font-size: .8rem; font-weight: 600; }
-.ticker-change.up { color: #91e7b0; }
-.ticker-change.down { color: #ffb3aa; }
+.ticker-change.up { color: var(--green); }
+.ticker-change.down { color: var(--red); }
 
 /* Signals */
 .signals { margin-bottom: 2rem; }
@@ -573,13 +548,9 @@ main {
     z-index: 25;
   }
 
-  .hero { padding: 1.75rem 1.25rem; }
-  .hero-main {
-    grid-template-columns: 1fr;
-    grid-template-areas: "title" "price" "time";
-    row-gap: .45rem;
-    text-align: center;
-  }
+  .price { font-size: 2.25rem; }
+
+  .hero-main { text-align: center; }
   .hero-price { justify-content: center; }
   .hero-ticker { justify-content: center; text-align: center; }
   .ticker-item { align-items: center; }
