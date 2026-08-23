@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily Summary — KOSPI Futures</title>
-<meta name="description" content="KOSPI 200's most recent trading day: open, high, low, close, and volume.">
+<meta name="description" content="KOSPI 200 daily summary: session range, breadth, and foreign vs. institutional flows.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -75,43 +75,149 @@
   </aside>
 
   <main>
-    <section class="page-header">
-      <h1>KOSPI 200 — Daily Summary</h1>
-      <p class="section-sub">Open, high, low, close, and volume for the most recent trading day.</p>
+
+    <!-- Session headline -->
+    <section class="ds-hero">
+      <div class="ds-hero-main">
+        <p class="ds-eyebrow">KOSPI 200 · Daily Summary</p>
+        <h1 id="dsDate">—</h1>
+        <div class="ds-price-row">
+          <span class="ds-price" id="dsClose">—</span>
+          <span class="ds-change" id="dsChange"></span>
+        </div>
+      </div>
+      <div class="ds-hero-side">
+        <div class="ds-session-stat">
+          <span class="ds-label">Open</span>
+          <span class="ds-value" id="dsOpen">—</span>
+        </div>
+        <div class="ds-session-stat">
+          <span class="ds-label">High <em id="dsHighTime"></em></span>
+          <span class="ds-value" id="dsHigh">—</span>
+        </div>
+        <div class="ds-session-stat">
+          <span class="ds-label">Low <em id="dsLowTime"></em></span>
+          <span class="ds-value" id="dsLow">—</span>
+        </div>
+        <div class="ds-session-stat">
+          <span class="ds-label">Prev. Close</span>
+          <span class="ds-value" id="dsPrevClose">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Where today sat inside its own range, and inside the 52-week range -->
+    <section class="panel">
+      <h2>Where Today Landed</h2>
+      <div class="ds-range-block">
+        <div class="ds-range-head">
+          <span class="ds-label">Day Range</span>
+          <span class="ds-range-ends"><span id="dsRangeLow">—</span> — <span id="dsRangeHigh">—</span></span>
+        </div>
+        <div class="ds-range-track"><span class="ds-range-marker" id="dsDayMarker"></span></div>
+        <p class="ds-range-note" id="dsDayNote">—</p>
+      </div>
+      <div class="ds-range-block">
+        <div class="ds-range-head">
+          <span class="ds-label">52-Week Range</span>
+          <span class="ds-range-ends"><span id="dsYearLow">—</span> — <span id="dsYearHigh">—</span></span>
+        </div>
+        <div class="ds-range-track"><span class="ds-range-marker" id="dsYearMarker"></span></div>
+        <p class="ds-range-note" id="dsYearNote">—</p>
+      </div>
     </section>
 
     <section class="content-grid">
-      <div class="content-main" style="grid-column: 1 / -1;">
+      <div class="content-main">
 
+        <!-- Breadth: how broad the move was, not just its size -->
         <div class="panel">
-          <h2 id="dsDateHeading">Loading…</h2>
-          <table class="data-table">
-            <tbody>
-              <tr><td>Open</td><td id="dsOpen">—</td></tr>
-              <tr><td>High</td><td id="dsHigh">—</td></tr>
-              <tr><td>Low</td><td id="dsLow">—</td></tr>
-              <tr><td>Close</td><td id="dsClose">—</td></tr>
-              <tr><td>Change</td><td id="dsChange">—</td></tr>
-              <tr><td>Volume</td><td id="dsVolume">—</td></tr>
-            </tbody>
-          </table>
-          <p class="sample-tag" id="dsAsOf">Loading…</p>
+          <h2>Market Breadth</h2>
+          <p class="section-sub">How many of the 200 constituents moved with the index.</p>
+          <div class="ds-breadth-bar" id="dsBreadthBar" role="img" aria-label="Advancing vs declining constituents">
+            <span class="ds-breadth-adv" id="dsBreadthAdv"></span>
+            <span class="ds-breadth-unch" id="dsBreadthUnch"></span>
+            <span class="ds-breadth-dec" id="dsBreadthDec"></span>
+          </div>
+          <div class="ds-breadth-legend">
+            <span><i class="dot up"></i> Advancing <strong id="dsAdv">—</strong></span>
+            <span><i class="dot flat"></i> Unchanged <strong id="dsUnch">—</strong></span>
+            <span><i class="dot down"></i> Declining <strong id="dsDec">—</strong></span>
+          </div>
+          <p class="ds-range-note" id="dsBreadthNote">—</p>
         </div>
 
+        <!-- The Korea-specific view: who was actually buying -->
         <div class="panel">
-          <h2>Last 5 Trading Days</h2>
-          <table class="data-table">
-            <thead>
-              <tr><th>Date</th><th>Open</th><th>High</th><th>Low</th><th>Close</th><th>Change</th></tr>
-            </thead>
-            <tbody id="dsRecentBody">
-              <tr><td colspan="6">Loading…</td></tr>
-            </tbody>
-          </table>
+          <h2>Foreign vs. Institutional Flows</h2>
+          <p class="section-sub">Net activity by investor type — a signal Korean market participants watch closely.</p>
+          <div class="ds-flow-today">
+            <div class="ds-flow-card">
+              <span class="ds-label">Foreign · today</span>
+              <span class="ds-flow-value" id="dsForeignToday">—</span>
+            </div>
+            <div class="ds-flow-card">
+              <span class="ds-label">Institutional · today</span>
+              <span class="ds-flow-value" id="dsInstToday">—</span>
+            </div>
+            <div class="ds-flow-card">
+              <span class="ds-label">Foreign · 5-day</span>
+              <span class="ds-flow-value" id="dsForeign5d">—</span>
+            </div>
+            <div class="ds-flow-card">
+              <span class="ds-label">Institutional · 5-day</span>
+              <span class="ds-flow-value" id="dsInst5d">—</span>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Date</th><th>Close</th><th>Change</th><th>Foreign</th><th>Institution</th></tr>
+              </thead>
+              <tbody id="dsFlowBody">
+                <tr><td colspan="5">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>
+
+      <aside class="content-aside">
+        <div class="panel">
+          <h3>Session Activity</h3>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Volume</td><td id="dsVolume">—</td></tr>
+              <tr><td>Trading Value</td><td id="dsTradingValue">—</td></tr>
+              <tr><td>Day Range Width</td><td id="dsRangeWidth">—</td></tr>
+              <tr><td>vs. 20-Day Avg. Value</td><td id="dsValueVsAvg">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>Recent Streak</h3>
+          <p class="ds-streak" id="dsStreak">—</p>
+          <p class="ds-range-note" id="dsStreakNote">—</p>
+        </div>
+
+        <div class="panel">
+          <h3>20-Day Context</h3>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Up Days</td><td id="ds20Up">—</td></tr>
+              <tr><td>Down Days</td><td id="ds20Down">—</td></tr>
+              <tr><td>Best Day</td><td id="ds20Best">—</td></tr>
+              <tr><td>Worst Day</td><td id="ds20Worst">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </aside>
     </section>
+
+    <p class="sample-tag" id="dsAsOf">Loading…</p>
+
   </main>
 </div>
 
