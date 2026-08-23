@@ -1235,3 +1235,20 @@ main {
   .mt-combo-lights { justify-content: center; }
   .mt-combo { text-align: center; }
 }
+
+/* Sidebar icons ---------------------------------------------------- */
+
+.sidebar li a {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+
+.sb-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color .12s ease;
+}
+.sidebar li a:hover .sb-icon { color: var(--primary); }
