@@ -131,7 +131,7 @@ module.exports = async (req, res) => {
           gubun1: '1',
           gubun2: '0',
           cts_date: '',
-          cnt: '5',
+          cnt: 5,
           rate_gbn: '0',
         },
       });
@@ -145,13 +145,25 @@ module.exports = async (req, res) => {
     }
 
     if (which === 't8419') {
+      const today = new Date();
+      const kst = new Date(today.getTime() + 9 * 3600 * 1000);
+      const ymd =
+        kst.getUTCFullYear() +
+        String(kst.getUTCMonth() + 1).padStart(2, '0') +
+        String(kst.getUTCDate()).padStart(2, '0');
+      const past = new Date(kst.getTime() - 7 * 24 * 3600 * 1000);
+      const ymdPast =
+        past.getUTCFullYear() +
+        String(past.getUTCMonth() + 1).padStart(2, '0') +
+        String(past.getUTCDate()).padStart(2, '0');
+
       const result = await callTR(token, 't8419', '/indtp/chart', {
         t8419InBlock: {
           shcode: upcode,
-          gubun: '1',
+          gubun: req.query.gubun || '1',
           qrycnt: 500,
-          sdate: '',
-          edate: '',
+          sdate: req.query.sdate || ymdPast,
+          edate: req.query.edate || ymd,
           cts_date: '',
           comp_yn: 'N',
         },
