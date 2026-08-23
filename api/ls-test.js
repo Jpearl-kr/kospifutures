@@ -289,6 +289,25 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'raw2301') {
+      // Dump one full row so we can see every field the board carries —
+      // the put side may be columns on the same row rather than a
+      // separate query.
+      const r = await callTR(token, 't2301', '/futureoption/market-data', {
+        t2301InBlock: { yyyymm: '', gubun: '0' },
+      });
+      const rows = r?.body?.t2301OutBlock2 || [];
+      const idx = Number(req.query.i || 0);
+      res.status(200).json({
+        which,
+        msg: r?.body?.rsp_msg,
+        header: r?.body?.t2301OutBlock || null,
+        totalRows: rows.length,
+        row: rows[idx] || null,
+      });
+      return;
+    }
+
     if (which === 'sweep2301p') {
       // Every row so far came back CO… (calls). Find the input that
       // returns the put side.
