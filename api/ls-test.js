@@ -307,6 +307,40 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'oiprobe') {
+      // t2101 came back "invalid TR CD". Is that the TR being unavailable
+      // to this account, or the call code? Test the same TR with a put
+      // code, and try t2421 (미결제약정추이, has an openyak field) for both.
+      const sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+      const callCode = req.query.call || 'B0169A34';   // C 2609 1100.0
+      const putCode = req.query.put || 'C0169A34';     // P 2609 1100.0
+
+      const attempts = [
+        { label: 't2101 / call', tr: 't2101', block: { t2101InBlock: { focode: callCode } } },
+        { label: 't2101 / put', tr: 't2101', block: { t2101InBlock: { focode: putCode } } },
+        { label: 't2421 / call', tr: 't2421', block: { t2421InBlock: { focode: callCode, bdgubun: '0', nmin: '1', tcgubun: '0', cnt: 1 } } },
+        { label: 't2421 / put', tr: 't2421', block: { t2421InBlock: { focode: putCode, bdgubun: '0', nmin: '1', tcgubun: '0', cnt: 1 } } },
+      ];
+
+      const results = [];
+      for (const a of attempts) {
+        const r = await callTR(token, a.tr, '/futureoption/market-data', a.block);
+        const body = r?.body || {};
+        const out = body.t2101OutBlock || body.t2421OutBlock || null;
+        results.push({
+          attempt: a.label,
+          msg: body.rsp_msg,
+          hname: out?.hname ?? null,
+          price: out?.price ?? null,
+          openInterest: out?.mgjv ?? out?.openyak ?? null,
+          volume: out?.volume ?? null,
+        });
+        await sleep2(400);
+      }
+      res.status(200).json({ which, callCode, putCode, results });
+      return;
+    }
+
     if (which === 'calloi') {
       // Can t2101 give us open interest + greeks for a call code?
       // Pick front-month calls near spot from the master and query a few.
