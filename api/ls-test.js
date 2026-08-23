@@ -289,6 +289,34 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'sweep2301p') {
+      // Every row so far came back CO… (calls). Find the input that
+      // returns the put side.
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const attempts = [
+        { label: 'gubun=3', block: { yyyymm: '', gubun: '3' } },
+        { label: 'gubun=P', block: { yyyymm: '', gubun: 'P' } },
+        { label: 'gubun=1,jgubun=1', block: { yyyymm: '', gubun: '1', jgubun: '1' } },
+        { label: 'gubun=0,cpgubun=3', block: { yyyymm: '', gubun: '0', cpgubun: '3' } },
+      ];
+      const results = [];
+      for (const a of attempts) {
+        const r = await callTR(token, 't2301', '/futureoption/market-data', {
+          t2301InBlock: a.block,
+        });
+        const rows = r?.body?.t2301OutBlock2 || [];
+        results.push({
+          attempt: a.label,
+          msg: r?.body?.rsp_msg,
+          count: rows.length,
+          codePrefixes: [...new Set(rows.slice(0, 40).map((x) => String(x.optcode || '').slice(0, 3)))],
+        });
+        await sleep(700);
+      }
+      res.status(200).json({ which, results });
+      return;
+    }
+
     if (which === 'sweep2301g') {
       // Does gubun select call vs put? Compare delta signs per value.
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
