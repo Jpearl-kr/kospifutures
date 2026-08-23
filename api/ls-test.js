@@ -307,6 +307,27 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'mastersample') {
+      // Look at raw values with escaping so hidden whitespace shows up.
+      const r = await callTR(token, 't8433', '/futureoption/market-data', {
+        t8433InBlock: { dummy: '' },
+      });
+      const rows = r?.body?.t8433OutBlock || [];
+      const step = Math.max(1, Math.floor(rows.length / 8));
+      const picks = [];
+      for (let i = 0; i < rows.length && picks.length < 8; i += step) {
+        const x = rows[i];
+        picks.push({
+          i,
+          shcode: JSON.stringify(x.shcode),
+          hname: JSON.stringify(x.hname),
+          expcode: JSON.stringify(x.expcode),
+        });
+      }
+      res.status(200).json({ which, total: rows.length, picks });
+      return;
+    }
+
     if (which === 'callcodes') {
       // Pull the master and report the call (BO…) entries for the
       // front-month expiry, with their strikes parsed from hname.
