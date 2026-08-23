@@ -81,7 +81,22 @@ module.exports = async (req, res) => {
       const result = await callTR(token, 't8424', '/indtp/market-data', {
         t8424InBlock: { gubun1 },
       });
-      res.status(200).json({ which, gubun1, result });
+      const list = result?.body?.t8424OutBlock || [];
+      const filter = req.query.filter;
+      const rows = filter
+        ? list.filter(
+            (r) =>
+              String(r.hname || '').includes(filter) ||
+              String(r.upcode || '').includes(filter)
+          )
+        : list;
+      res.status(200).json({
+        which,
+        gubun1,
+        total: list.length,
+        showing: rows.length,
+        rows: rows.slice(0, 60),
+      });
       return;
     }
 
@@ -97,7 +112,15 @@ module.exports = async (req, res) => {
       const result = await callTR(token, 't1516', '/indtp/market-data', {
         t1516InBlock: { upcode, gubun: '0', shcode: '' },
       });
-      res.status(200).json({ which, upcode, result });
+      const list = result?.body?.t1516OutBlock1 || [];
+      res.status(200).json({
+        which,
+        upcode,
+        rspMsg: result?.body?.rsp_msg,
+        header: result?.body?.t1516OutBlock,
+        constituentCount: list.length,
+        sample: list.slice(0, 5),
+      });
       return;
     }
 
