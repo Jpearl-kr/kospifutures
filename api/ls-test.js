@@ -307,6 +307,53 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'calloi') {
+      // Can t2101 give us open interest + greeks for a call code?
+      // Pick front-month calls near spot from the master and query a few.
+      const sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+      const master = await callTR(token, 't8433', '/futureoption/market-data', {
+        t8433InBlock: { dummy: '' },
+      });
+      const rows = master?.body?.t8433OutBlock || [];
+      const parsed = rows
+        .map((x) => {
+          const m = String(x.hname || '').match(/^([CP])\s+(\d+)\s+([\d,.]+)/);
+          return m
+            ? { shcode: x.shcode, side: m[1], expiry: m[2], strike: Number(m[3].replace(/,/g, '')) }
+            : null;
+        })
+        .filter(Boolean);
+
+      const expiry = req.query.expiry || '2609';
+      const spot = Number(req.query.spot || 1099.7);
+      const calls = parsed
+        .filter((x) => x.side === 'C' && x.expiry === expiry)
+        .sort((a, b) => Math.abs(a.strike - spot) - Math.abs(b.strike - spot))
+        .slice(0, 4);
+
+      const results = [];
+      for (const c of calls) {
+        const r = await callTR(token, 't2101', '/futureoption/market-data', {
+          t2101InBlock: { focode: c.shcode },
+        });
+        const b = r?.body?.t2101OutBlock;
+        results.push({
+          shcode: c.shcode,
+          strike: c.strike,
+          msg: r?.body?.rsp_msg,
+          hname: b?.hname,
+          price: b?.price,
+          openInterest: b?.mgjv,
+          volume: b?.volume,
+          iv: b?.impv,
+          delta: b?.delt,
+        });
+        await sleep2(400);
+      }
+      res.status(200).json({ which, expiry, spot, results });
+      return;
+    }
+
     if (which === 'mastersample') {
       // Look at raw values with escaping so hidden whitespace shows up.
       const r = await callTR(token, 't8433', '/futureoption/market-data', {
