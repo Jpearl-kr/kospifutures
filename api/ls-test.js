@@ -124,6 +124,50 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 't1514') {
+      const result = await callTR(token, 't1514', '/indtp/market-data', {
+        t1514InBlock: {
+          upcode,
+          gubun1: '1',
+          gubun2: '0',
+          cts_date: '',
+          cnt: '5',
+          rate_gbn: '0',
+        },
+      });
+      res.status(200).json({
+        which,
+        upcode,
+        rspMsg: result?.body?.rsp_msg,
+        rows: (result?.body?.t1514OutBlock1 || []).slice(0, 5),
+      });
+      return;
+    }
+
+    if (which === 't8419') {
+      const result = await callTR(token, 't8419', '/indtp/chart', {
+        t8419InBlock: {
+          shcode: upcode,
+          gubun: '1',
+          qrycnt: 500,
+          sdate: '',
+          edate: '',
+          cts_date: '',
+          comp_yn: 'N',
+        },
+      });
+      const rows = result?.body?.t8419OutBlock1 || [];
+      res.status(200).json({
+        which,
+        upcode,
+        rspMsg: result?.body?.rsp_msg,
+        count: rows.length,
+        first: rows.slice(0, 3),
+        last: rows.slice(-3),
+      });
+      return;
+    }
+
     res.status(400).json({ error: 'unknown which=' + which });
   } catch (err) {
     res.status(200).json({ error: true, message: String(err && err.message || err) });
