@@ -289,6 +289,32 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'findcalls') {
+      // Every gubun tried so far returns puts (all deltas negative).
+      // Sweep a wider set and report the delta sign, which is the only
+      // reliable call/put tell in this response.
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const values = (req.query.vals || '0,1,2,3,4,5,C,P,1,2').split(',');
+      const results = [];
+      for (const g of values) {
+        const r = await callTR(token, 't2301', '/futureoption/market-data', {
+          t2301InBlock: { yyyymm: '', gubun: g },
+        });
+        const rows = r?.body?.t2301OutBlock2 || [];
+        const deltas = rows.map((x) => Number(x.delt)).filter(Number.isFinite);
+        results.push({
+          gubun: g,
+          msg: r?.body?.rsp_msg,
+          count: rows.length,
+          pos: deltas.filter((d) => d > 0).length,
+          neg: deltas.filter((d) => d < 0).length,
+        });
+        await sleep(700);
+      }
+      res.status(200).json({ which, results });
+      return;
+    }
+
     if (which === 'scan2301') {
       // Walk the whole board and report how codes, strikes and deltas
       // relate — is the call side present at all?
