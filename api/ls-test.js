@@ -307,6 +307,43 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'boardprobe') {
+      // Only t2301 / t8433 / t8434 are enabled on this account. t2301's
+      // documented input is just {yyyymm, gubun} — try feeding it the
+      // call-side symbol anyway under the field names LS uses elsewhere,
+      // in case the board accepts an undocumented selector.
+      const sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+      const callCode = req.query.call || 'B0169A34';
+      const attempts = [
+        { label: 'shcode=call', block: { yyyymm: '', gubun: '0', shcode: callCode } },
+        { label: 'focode=call', block: { yyyymm: '', gubun: '0', focode: callCode } },
+        { label: 'optcode=call', block: { yyyymm: '', gubun: '0', optcode: callCode } },
+        { label: 'gubun=B0', block: { yyyymm: '', gubun: 'B0' } },
+        { label: 'gubun=B', block: { yyyymm: '', gubun: 'B' } },
+        { label: 'gubun=2609,call', block: { yyyymm: '202609', gubun: '0', shcode: callCode } },
+      ];
+
+      const results = [];
+      for (const a of attempts) {
+        const r = await callTR(token, 't2301', '/futureoption/market-data', {
+          t2301InBlock: a.block,
+        });
+        const rows = r?.body?.t2301OutBlock2 || [];
+        const deltas = rows.map((x) => Number(x.delt)).filter(Number.isFinite);
+        results.push({
+          attempt: a.label,
+          msg: r?.body?.rsp_msg,
+          count: rows.length,
+          pos: deltas.filter((d) => d > 0).length,
+          neg: deltas.filter((d) => d < 0).length,
+          firstCode: rows[0]?.optcode ?? null,
+        });
+        await sleep2(700);
+      }
+      res.status(200).json({ which, callCode, results });
+      return;
+    }
+
     if (which === 'oiprobe') {
       // t2101 came back "invalid TR CD". Is that the TR being unavailable
       // to this account, or the call code? Test the same TR with a put
