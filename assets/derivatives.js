@@ -94,7 +94,9 @@
       var sorted = active.slice().sort(function (a, b) {
         return Math.abs(a.strike - (u.price || 0)) - Math.abs(b.strike - (u.price || 0));
       });
-      var near = sorted.slice(0, 21).sort(function (a, b) { return a.strike - b.strike; });
+      // Descending, so the ladder reads the same way as the option chain
+      // table below it.
+      var near = sorted.slice(0, 21).sort(function (a, b) { return b.strike - a.strike; });
 
       var maxOi = 0;
       near.forEach(function (r) {

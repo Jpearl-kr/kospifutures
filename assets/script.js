@@ -126,7 +126,9 @@ if ('scrollRestoration' in history) {
       applyQuote('tUsSemi', q.ussemi, 2);
       setText('tickerSync', stamp);
 
-      setText('dataAsOf', 'Data as of ' + stamp + ' — source: Yahoo Finance');
+      // Range & volatility panel — filled from this same response rather
+      // than a second call, so the home page makes one request in total.
+      applyRangePanel(q.kospi200, stamp);
 
       // Signal cards: timestamp only, states remain a sample until the
       // signal methodology is implemented.
@@ -137,62 +139,58 @@ if ('scrollRestoration' in history) {
     })
     .catch(function () {
       setText('heroTimestamp', 'Live data unavailable');
-    });
-
-  // Range & volatility comes from LS rather than Yahoo — Yahoo's 52-week
-  // fields for ^KS200 mirrored the day's range instead of the real one.
-  fetch('/api/ls')
-    .then(function (res) { return res.json(); })
-    .then(function (data) {
-      if (data.error) throw new Error('unavailable');
-      var idx = data.index || {};
-
-      // Position the price along each range so the reader sees where it
-      // sits without doing the arithmetic themselves.
-      function placeOn(low, high, value, fillId, dotId) {
-        if (!low || !high || !value || high <= low) return null;
-        var pct = Math.max(0, Math.min(100, ((value - low) / (high - low)) * 100));
-        var fill = document.getElementById(fillId);
-        var dot = document.getElementById(dotId);
-        if (fill) fill.style.width = pct + '%';
-        if (dot) dot.style.left = pct + '%';
-        return pct;
-      }
-
-      setText('rvDayLow', fmtNumber(idx.low, 2));
-      setText('rvDayHigh', fmtNumber(idx.high, 2));
-      var dayPct = placeOn(idx.low, idx.high, idx.price, 'rvDayFill', 'rvDayDot');
-
-      setText('rvYearLowMini', fmtNumber(idx.yearLow, 2));
-      setText('rvYearHighMini', fmtNumber(idx.yearHigh, 2));
-      placeOn(idx.yearLow, idx.yearHigh, idx.price, 'rvYearFill', 'rvYearDot');
-
-      if (idx.yearHigh && idx.price) {
-        var fromHigh = ((idx.price - idx.yearHigh) / idx.yearHigh) * 100;
-        setText('rvFromHigh', fmtPercent(fromHigh));
-        setChangeClass('rvFromHigh', fromHigh);
-      }
-
-      if (idx.high && idx.low && idx.prevClose) {
-        var width = idx.high - idx.low;
-        setText('rvRangeToday', ((width / idx.prevClose) * 100).toFixed(2) + '%');
-      }
-
-      if (dayPct !== null) {
-        setText('rvClosePos', dayPct.toFixed(0) + '%');
-        var posEl = document.getElementById('rvClosePos');
-        if (posEl) {
-          posEl.classList.remove('up', 'down');
-          if (dayPct >= 70) posEl.classList.add('up');
-          else if (dayPct <= 30) posEl.classList.add('down');
-        }
-      }
-
-      setText('rvVolume', idx.volume ? Math.round(idx.volume).toLocaleString('en-US') : '—');
-
-      setText('dataAsOf', formatTimestamp(new Date()));
-    })
-    .catch(function () {
       setText('dataAsOf', 'Live data unavailable');
     });
+
+  // Position the price along each range so the reader sees where it sits
+  // without doing the arithmetic themselves.
+  function placeOn(low, high, value, fillId, dotId) {
+    if (!low || !high || !value || high <= low) return null;
+    var pct = Math.max(0, Math.min(100, ((value - low) / (high - low)) * 100));
+    var fill = document.getElementById(fillId);
+    var dot = document.getElementById(dotId);
+    if (fill) fill.style.width = pct + '%';
+    if (dot) dot.style.left = pct + '%';
+    return pct;
+  }
+
+  function applyRangePanel(k, stamp) {
+    if (!k) {
+      setText('dataAsOf', 'Live data unavailable');
+      return;
+    }
+
+    setText('rvDayLow', fmtNumber(k.dayLow, 2));
+    setText('rvDayHigh', fmtNumber(k.dayHigh, 2));
+    var dayPct = placeOn(k.dayLow, k.dayHigh, k.price, 'rvDayFill', 'rvDayDot');
+
+    setText('rvYearLowMini', fmtNumber(k.weekLow52, 2));
+    setText('rvYearHighMini', fmtNumber(k.weekHigh52, 2));
+    placeOn(k.weekLow52, k.weekHigh52, k.price, 'rvYearFill', 'rvYearDot');
+
+    if (k.weekHigh52 && k.price) {
+      var fromHigh = ((k.price - k.weekHigh52) / k.weekHigh52) * 100;
+      setText('rvFromHigh', fmtPercent(fromHigh));
+      setChangeClass('rvFromHigh', fromHigh);
+    }
+
+    if (k.dayHigh && k.dayLow && k.prevClose) {
+      var width = k.dayHigh - k.dayLow;
+      setText('rvRangeToday', ((width / k.prevClose) * 100).toFixed(2) + '%');
+    }
+
+    if (dayPct !== null) {
+      setText('rvClosePos', dayPct.toFixed(0) + '%');
+      var posEl = document.getElementById('rvClosePos');
+      if (posEl) {
+        posEl.classList.remove('up', 'down');
+        if (dayPct >= 70) posEl.classList.add('up');
+        else if (dayPct <= 30) posEl.classList.add('down');
+      }
+    }
+
+    setText('rvVolume', k.volume ? Math.round(k.volume).toLocaleString('en-US') : '—');
+    setText('dataAsOf', stamp);
+  }
+
 })();
