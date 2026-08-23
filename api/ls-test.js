@@ -289,6 +289,57 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'sweepfut') {
+      // KOSPI 200 futures codes follow 101 + <month letter> + <year digit>.
+      // Front month rolls quarterly (Mar/Jun/Sep/Dec => H/M/U/Z).
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const candidates = (req.query.codes || '101U6,101Z6,101H7,101M7,101QC000,105U6')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const results = [];
+      for (const code of candidates) {
+        const r = await callTR(token, 't2101', '/futureoption/market-data', {
+          t2101InBlock: { focode: code },
+        });
+        const b = r?.body?.t2101OutBlock;
+        results.push({
+          focode: code,
+          msg: r?.body?.rsp_msg,
+          hname: b?.hname || null,
+          price: b?.price ?? null,
+          basis: b?.basis ?? null,
+          openInterest: b?.mgjv ?? null,
+        });
+        await sleep(300);
+      }
+      res.status(200).json({ which, results });
+      return;
+    }
+
+    if (which === 'sweep2301') {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const months = (req.query.months || ',202609,202610,202612')
+        .split(',')
+        .map((s) => s.trim());
+      const results = [];
+      for (const m of months) {
+        const r = await callTR(token, 't2301', '/futureoption/market-data', {
+          t2301InBlock: { yyyymm: m, gubun: '0' },
+        });
+        const rows = r?.body?.t2301OutBlock2 || [];
+        results.push({
+          yyyymm: m || '(blank)',
+          msg: r?.body?.rsp_msg,
+          strikeCount: rows.length,
+          sample: rows.slice(0, 2),
+        });
+        await sleep(600);
+      }
+      res.status(200).json({ which, results });
+      return;
+    }
+
     if (which === 'sweep8435') {
       const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       const results = [];
