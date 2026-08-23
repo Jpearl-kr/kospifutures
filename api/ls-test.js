@@ -289,6 +289,31 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'sweep2301g') {
+      // Does gubun select call vs put? Compare delta signs per value.
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const results = [];
+      for (const g of ['0', '1', '2']) {
+        const r = await callTR(token, 't2301', '/futureoption/market-data', {
+          t2301InBlock: { yyyymm: '', gubun: g },
+        });
+        const rows = r?.body?.t2301OutBlock2 || [];
+        const deltas = rows.map((x) => Number(x.delt)).filter((n) => Number.isFinite(n));
+        results.push({
+          gubun: g,
+          msg: r?.body?.rsp_msg,
+          count: rows.length,
+          negativeDeltas: deltas.filter((d) => d < 0).length,
+          positiveDeltas: deltas.filter((d) => d > 0).length,
+          sampleCodes: rows.slice(0, 3).map((x) => x.optcode),
+          sampleStrikes: rows.slice(0, 3).map((x) => x.actprice),
+        });
+        await sleep(700);
+      }
+      res.status(200).json({ which, results });
+      return;
+    }
+
     if (which === 'sweepfut') {
       // KOSPI 200 futures codes follow 101 + <month letter> + <year digit>.
       // Front month rolls quarterly (Mar/Jun/Sep/Dec => H/M/U/Z).
