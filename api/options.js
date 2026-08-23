@@ -52,17 +52,6 @@ const num = (v) => {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Master rows name themselves like "C 2609   335.0" / "P 2610 1,012.5".
-function parseMasterName(hname) {
-  const m = String(hname || '').match(/^([CP])\s+(\d+)\s+([\d,.]+)/);
-  if (!m) return null;
-  return {
-    side: m[1] === 'C' ? 'call' : 'put',
-    expiry: m[2],
-    strike: Number(m[3].replace(/,/g, '')),
-  };
-}
-
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
   res.setHeader('Content-Type', 'application/json');
@@ -70,9 +59,9 @@ module.exports = async (req, res) => {
   try {
     const token = await getToken();
 
-    // The option board (t2301) only ever answers with the put side no
-    // matter what gubun is passed, so the calls come from the symbol
-    // master (t8433) priced through the multi-quote TR (t8434).
+    // The board TR returns the put side only, whatever gubun is passed —
+    // it still gives us the strike ladder, the underlying header, and
+    // full put analytics in one call.
     const board = await callTR(token, 't2301', '/futureoption/market-data', {
       t2301InBlock: { yyyymm: req.query.yyyymm || '', gubun: '0' },
     });
@@ -99,7 +88,6 @@ module.exports = async (req, res) => {
         openInterest: num(r.mgjv),
         openInterestChange: num(r.mgjvupdn),
         iv: num(r.iv),
-        impliedVol: num(r.impv),
         theoryPrice: num(r.theoryprice),
         timeValue: num(r.timevl),
         delta: num(r.delt),
@@ -110,77 +98,45 @@ module.exports = async (req, res) => {
       };
     }
 
-    // Work out which expiry the board is showing, then pull the matching
-    // calls. Codes are B0… for calls and C0… for puts — that's a zero,
-    // not the letter O.
+    // Call symbols mirror put symbols exactly apart from the prefix:
+    // B0… is the call, C0… the put, same expiry and strike. So the call
+    // for any strike on the board is derivable without a master lookup.
+    // t2111 then prices each one, open interest and greeks included.
+    const strikesNearSpot = Array.from(byStrike.values())
+      .filter((r) => r.put && r.put.code)
+      .sort((a, b) => Math.abs(a.strike - (spot || 0)) - Math.abs(b.strike - (spot || 0)))
+      .slice(0, Number(req.query.depth || 21));
+
     let callsFetched = 0;
-    try {
-      const master = await callTR(token, 't8433', '/futureoption/market-data', {
-        t8433InBlock: { dummy: '' },
-      });
-      const masterRows = master?.t8433OutBlock || [];
-
-      // Match the board's expiry by finding the put expiry that covers
-      // the same strikes we already have.
-      const boardStrikes = new Set(Array.from(byStrike.keys()));
-      const expiryScore = new Map();
-      for (const row of masterRows) {
-        const parsed = parseMasterName(row.hname);
-        if (!parsed || parsed.side !== 'put') continue;
-        if (!boardStrikes.has(parsed.strike)) continue;
-        expiryScore.set(parsed.expiry, (expiryScore.get(parsed.expiry) || 0) + 1);
-      }
-      let expiry = null, best = 0;
-      for (const [exp, score] of expiryScore) {
-        if (score > best) { best = score; expiry = exp; }
-      }
-
-      if (expiry) {
-        // Only price the strikes near spot — the multi-quote TR takes a
-        // bounded list, and the far wings are noise anyway.
-        const calls = masterRows
-          .map((row) => ({ row, parsed: parseMasterName(row.hname) }))
-          .filter((x) => x.parsed && x.parsed.side === 'call' && x.parsed.expiry === expiry)
-          .sort((a, b) =>
-            Math.abs(a.parsed.strike - (spot || 0)) - Math.abs(b.parsed.strike - (spot || 0))
-          )
-          .slice(0, 40);
-
-        // t8434 takes codes as one concatenated string of fixed-width
-        // symbols, in batches.
-        const BATCH = 20;
-        for (let i = 0; i < calls.length; i += BATCH) {
-          const batch = calls.slice(i, i + BATCH);
-          const focode = batch.map((x) => x.row.shcode).join('');
-          const quote = await callTR(token, 't8434', '/futureoption/market-data', {
-            t8434InBlock: { qrycnt: batch.length, focode },
+    await Promise.all(
+      strikesNearSpot.map(async (row, i) => {
+        // t2111 allows 10 calls/sec; stagger so a wide chain stays inside it.
+        await sleep(i * 120);
+        const callCode = 'B0' + String(row.put.code).slice(2);
+        try {
+          const q = await callTR(token, 't2111', '/futureoption/market-data', {
+            t2111InBlock: { focode: callCode },
           });
-          const quoteRows = quote?.t8434OutBlock1 || [];
-          const byCode = new Map(quoteRows.map((q) => [String(q.focode || '').trim(), q]));
-
-          for (const { row, parsed } of batch) {
-            const q = byCode.get(String(row.shcode).trim());
-            if (!q) continue;
-            ensure(parsed.strike).call = {
-              code: row.shcode,
-              price: num(q.price),
-              change: num(q.change),
-              changePercent: num(q.diff),
-              volume: num(q.volume),
-              // The multi-quote TR carries price and volume only — no
-              // open interest or greeks on this route.
-              openInterest: null,
-              iv: null,
-            };
-            callsFetched++;
-          }
-          if (i + BATCH < calls.length) await sleep(250);
+          const o = q?.t2111OutBlock;
+          if (!o || num(o.price) === null) return;
+          row.call = {
+            code: callCode,
+            price: num(o.price),
+            change: num(o.change),
+            changePercent: num(o.diff),
+            volume: num(o.volume),
+            openInterest: num(o.mgjv),
+            openInterestChange: num(o.mgjvdiff),
+            iv: num(o.impv),
+            theoryPrice: num(o.theoryprice),
+            delta: num(o.delt),
+          };
+          callsFetched++;
+        } catch (err) {
+          // One bad strike shouldn't blank the chain.
         }
-      }
-    } catch (err) {
-      // Calls are supplementary — a failure here still leaves a usable
-      // put-side board rather than blanking the page.
-    }
+      })
+    );
 
     const chain = Array.from(byStrike.values()).sort((a, b) => a.strike - b.strike);
 
@@ -209,13 +165,13 @@ module.exports = async (req, res) => {
 
     res.status(200).json({
       asOf: new Date().toISOString(),
-      // Open interest and greeks are only published on the put route, so
-      // the frontend must not present OI-derived figures as covering both
-      // sides.
       coverage: {
+        callsHaveOpenInterest: callsFetched > 0,
         putsHaveOpenInterest: true,
-        callsHaveOpenInterest: false,
         callsPriced: callsFetched,
+        // Ratios and max pain only span the strikes we priced calls for,
+        // not the full board.
+        callStrikesCovered: strikesNearSpot.length,
       },
       underlying: {
         price: spot,

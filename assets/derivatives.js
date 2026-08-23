@@ -229,14 +229,18 @@
     K.setText('dvAvgIv', s.averageIv ? s.averageIv.toFixed(2) + '%' : '—');
     K.setText('dvHistVol', u.histVol ? u.histVol.toFixed(2) + '%' : '—');
 
-    // Say plainly which side the detailed data covers.
+    // Say plainly how far the call-side data reaches.
     var covEl = document.getElementById('dvCoverage');
-    if (covEl && !hasCallOI) {
-      covEl.textContent =
-        'Open interest, implied volatility, and greeks are published for the put side only on our data feed. ' +
-        'Call rows show last price and volume where available' +
-        (cov.callsPriced ? ' (' + cov.callsPriced + ' strikes priced)' : '') +
-        '. Figures that need both sides — put/call ratio on open interest, and max pain — are marked n/a rather than computed from puts alone.';
+    if (covEl) {
+      covEl.textContent = hasCallOI
+        ? 'Puts come from the full option board (' + (s.strikeCount || 0) +
+          ' strikes). Calls are quoted individually, so the call side — and the ' +
+          'put/call ratio and max pain derived from it — covers the ' +
+          (cov.callStrikesCovered || cov.callsPriced || 0) +
+          ' strikes nearest spot, where almost all activity sits.'
+        : 'Call-side quotes are unavailable right now, so figures that need both ' +
+          'sides — put/call ratio on open interest, and max pain — are marked n/a ' +
+          'rather than computed from puts alone.';
     }
 
     K.setText(
