@@ -289,6 +289,43 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'scan2301') {
+      // Walk the whole board and report how codes, strikes and deltas
+      // relate — is the call side present at all?
+      const r = await callTR(token, 't2301', '/futureoption/market-data', {
+        t2301InBlock: { yyyymm: '', gubun: '0' },
+      });
+      const rows = r?.body?.t2301OutBlock2 || [];
+      const spot = Number(r?.body?.t2301OutBlock?.gmprice);
+      const prefixes = {};
+      let posDelta = 0, negDelta = 0, zeroDelta = 0;
+      rows.forEach((x) => {
+        const p = String(x.optcode || '').slice(0, 2);
+        prefixes[p] = (prefixes[p] || 0) + 1;
+        const d = Number(x.delt);
+        if (d > 0) posDelta++;
+        else if (d < 0) negDelta++;
+        else zeroDelta++;
+      });
+      // Sample a deep ITM strike and a deep OTM strike relative to spot.
+      const sorted = rows.slice().sort((a, b) => Number(a.actprice) - Number(b.actprice));
+      const pick = (row) => row && {
+        strike: row.actprice, code: row.optcode, price: row.price,
+        delta: row.delt, iv: row.iv, oi: row.mgjv,
+      };
+      res.status(200).json({
+        which,
+        spot,
+        totalRows: rows.length,
+        codePrefixCounts: prefixes,
+        deltaSigns: { positive: posDelta, negative: negDelta, zero: zeroDelta },
+        lowestStrike: pick(sorted[0]),
+        highestStrike: pick(sorted[sorted.length - 1]),
+        duplicateStrikes: sorted.length - new Set(sorted.map((x) => x.actprice)).size,
+      });
+      return;
+    }
+
     if (which === 'raw2301') {
       // Dump one full row so we can see every field the board carries —
       // the put side may be columns on the same row rather than a
