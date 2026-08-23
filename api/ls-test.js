@@ -237,6 +237,58 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 't8435') {
+      // Master list of derivatives symbols — gubun: 0=futures, 1=options
+      const result = await callTR(token, 't8435', '/futureoption/market-data', {
+        t8435InBlock: { gubun: req.query.gubun || '0' },
+      });
+      const rows = result?.body?.t8435OutBlock || [];
+      const filter = req.query.filter;
+      const matched = filter
+        ? rows.filter(
+            (r) =>
+              String(r.hname || '').includes(filter) ||
+              String(r.shcode || '').includes(filter)
+          )
+        : rows;
+      res.status(200).json({
+        which,
+        rspMsg: result?.body?.rsp_msg,
+        total: rows.length,
+        showing: matched.length,
+        rows: matched.slice(0, 30),
+      });
+      return;
+    }
+
+    if (which === 't2101') {
+      const result = await callTR(token, 't2101', '/futureoption/market-data', {
+        t2101InBlock: { focode: req.query.focode || '' },
+      });
+      res.status(200).json({
+        which,
+        focode: req.query.focode,
+        rspMsg: result?.body?.rsp_msg,
+        data: result?.body?.t2101OutBlock || null,
+      });
+      return;
+    }
+
+    if (which === 't2301') {
+      const result = await callTR(token, 't2301', '/futureoption/market-data', {
+        t2301InBlock: { yyyymm: req.query.yyyymm || '', gubun: req.query.gubun || '0' },
+      });
+      const rows = result?.body?.t2301OutBlock2 || [];
+      res.status(200).json({
+        which,
+        rspMsg: result?.body?.rsp_msg,
+        header: result?.body?.t2301OutBlock || null,
+        strikeCount: rows.length,
+        sample: rows.slice(0, 4),
+      });
+      return;
+    }
+
     res.status(400).json({ error: 'unknown which=' + which });
   } catch (err) {
     res.status(200).json({ error: true, message: String(err && err.message || err) });
