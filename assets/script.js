@@ -190,10 +190,7 @@ if ('scrollRestoration' in history) {
 
       setText('rvVolume', idx.volume ? Math.round(idx.volume).toLocaleString('en-US') : '—');
 
-      setText(
-        'dataAsOf',
-        'Data as of ' + formatTimestamp(new Date()) + ' — source: LS Securities Open API'
-      );
+      setText('dataAsOf', formatTimestamp(new Date()));
     })
     .catch(function () {
       setText('dataAsOf', 'Live data unavailable');

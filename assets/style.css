@@ -1056,6 +1056,16 @@ main {
 
 @media (max-width: 600px) {
   .rv-mini-stats { grid-template-columns: repeat(2, 1fr); }
+  .rv-mini-stat { align-items: center; text-align: center; }
   .rv-mini-row { grid-template-columns: 54px auto 1fr auto; gap: .4rem; }
   .rv-mini-ends { font-size: .72rem; }
+}
+
+.rv-mini-asof {
+  font-size: .875rem;
+  color: var(--text-muted);
+  margin: 1rem 0 0;
+}
+@media (max-width: 600px) {
+  .rv-mini-asof { text-align: center; }
 }
