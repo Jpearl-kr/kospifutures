@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Derivatives Board — KOSPI Futures</title>
+<meta name="description" content="KOSPI 200 option chain: open interest, put/call ratio, implied volatility, and max pain.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html#home">KOSPI <strong>FUTURES</strong></a>
+  <nav class="top-nav" aria-label="Primary">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#about">About</a>
+  </nav>
+  <div class="auth-area" id="authArea"></div>
+</header>
+
+<div class="layout">
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Section">
+      <p class="sidebar-title">Market Overview</p>
+      <ul>
+        <li><a href="index.html#home">Home</a></li>
+      </ul>
+
+      <p class="sidebar-title">Trading Signals</p>
+      <ul>
+        <li><a href="index.html#signals">Trading Signals</a></li>
+      </ul>
+
+      <p class="sidebar-title">Market Data</p>
+      <ul>
+        <li><a href="range-volatility.html">Range &amp; Volatility</a></li>
+        <li><a href="daily-summary.html">Daily Summary</a></li>
+        <li><a href="historical-data.html">Historical Data</a></li>
+        <li><a href="derivatives.html">Derivatives Board</a></li>
+      </ul>
+
+      <p class="sidebar-title">Archives</p>
+      <ul>
+        <li><a href="records.html">Records</a></li>
+        <li><a href="winning-rate.html">Winning Rate of the Day</a></li>
+      </ul>
+
+      <p class="sidebar-title">Tools</p>
+      <ul>
+        <li><a href="stock-finder.html">Stock Finder</a></li>
+        <li><a href="economic-calendar.html">Economic Calendar</a></li>
+      </ul>
+
+      <p class="sidebar-title">Resources</p>
+      <ul>
+        <li><a href="index.html#news">News &amp; Release</a></li>
+        <li><a href="index.html#methodology">Signal Methodology</a></li>
+        <li><a href="index.html#faq">FAQ</a></li>
+      </ul>
+
+      <p class="sidebar-title">Support</p>
+      <ul>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+
+    <section class="page-header">
+      <h1>Derivatives Board</h1>
+      <p class="section-sub">KOSPI 200 front-month options — where positions are built, and what they say about expected direction.</p>
+    </section>
+
+    <!-- Positioning at a glance -->
+    <section class="dv-stats">
+      <div class="dv-stat">
+        <span class="ds-label">Put / Call Ratio · OI</span>
+        <span class="dv-stat-value" id="dvPcOi">—</span>
+        <span class="rv-sub" id="dvPcOiNote">—</span>
+      </div>
+      <div class="dv-stat">
+        <span class="ds-label">Put / Call Ratio · Volume</span>
+        <span class="dv-stat-value" id="dvPcVol">—</span>
+        <span class="rv-sub">today's turnover</span>
+      </div>
+      <div class="dv-stat">
+        <span class="ds-label">Max Pain</span>
+        <span class="dv-stat-value" id="dvMaxPain">—</span>
+        <span class="rv-sub" id="dvMaxPainNote">strike where option holders lose most</span>
+      </div>
+      <div class="dv-stat">
+        <span class="ds-label">Days to Expiry</span>
+        <span class="dv-stat-value" id="dvDte">—</span>
+        <span class="rv-sub" id="dvUnderlying">—</span>
+      </div>
+    </section>
+
+    <!-- Open interest walls: the levels that act as magnets/barriers -->
+    <section class="panel">
+      <h2>Open Interest by Strike</h2>
+      <p class="section-sub">Large put open interest tends to act as support, large call open interest as resistance. The tallest bars are where the market has the most at stake.</p>
+      <div class="dv-oi-chart" id="dvOiChart">
+        <p class="ds-range-note">Loading…</p>
+      </div>
+      <div class="dv-oi-legend">
+        <span><i class="dot up"></i> Call OI</span>
+        <span><i class="dot down"></i> Put OI</span>
+        <span><i class="dot spot"></i> Spot</span>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="content-main">
+
+        <!-- The chain itself -->
+        <div class="panel">
+          <h2>Option Chain</h2>
+          <p class="section-sub">Strikes nearest the money, where most trading activity concentrates.</p>
+          <div class="table-scroll">
+            <table class="data-table dv-chain">
+              <thead>
+                <tr>
+                  <th colspan="4" class="dv-call-head">Calls</th>
+                  <th class="dv-strike-head">Strike</th>
+                  <th colspan="4" class="dv-put-head">Puts</th>
+                </tr>
+                <tr>
+                  <th>OI</th><th>Vol</th><th>IV</th><th>Last</th>
+                  <th></th>
+                  <th>Last</th><th>IV</th><th>Vol</th><th>OI</th>
+                </tr>
+              </thead>
+              <tbody id="dvChainBody">
+                <tr><td colspan="9">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Volatility skew: the shape of fear -->
+        <div class="panel">
+          <h2>Volatility Skew</h2>
+          <p class="section-sub">Implied volatility across strikes. A steep left side means downside protection is in demand — a classic risk-off tell in Korean index options.</p>
+          <div class="dv-skew" id="dvSkew">
+            <p class="ds-range-note">Loading…</p>
+          </div>
+          <p class="ds-range-note" id="dvSkewNote">—</p>
+        </div>
+
+      </div>
+
+      <aside class="content-aside">
+        <div class="panel">
+          <h3>Open Interest</h3>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Total Call OI</td><td id="dvCallOi">—</td></tr>
+              <tr><td>Total Put OI</td><td id="dvPutOi">—</td></tr>
+              <tr><td>Peak Call Strike</td><td id="dvPeakCall">—</td></tr>
+              <tr><td>Peak Put Strike</td><td id="dvPeakPut">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>Implied Volatility</h3>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Call IV</td><td id="dvCallIv">—</td></tr>
+              <tr><td>Put IV</td><td id="dvPutIv">—</td></tr>
+              <tr><td>Chain Average</td><td id="dvAvgIv">—</td></tr>
+              <tr><td>Historical Vol</td><td id="dvHistVol">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>How to Read This</h3>
+          <p class="dv-help"><strong>Put/Call OI above 1</strong> means more open puts than calls — often defensive positioning, though it can also mark a crowded hedge that unwinds sharply.</p>
+          <p class="dv-help"><strong>Max pain</strong> is the strike where the largest total value of options would expire worthless. Price sometimes drifts toward it into expiry.</p>
+        </div>
+      </aside>
+    </section>
+
+    <p class="sample-tag" id="dvAsOf">Loading…</p>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  <nav aria-label="Footer">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#methodology">Methodology</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#contact">Contact</a>
+  </nav>
+  <p class="disclaimer">Market data shown is for informational purposes only and is not investment advice. Any investment decisions you make are your own responsibility.</p>
+  <p class="copyright">&copy; 2026 KOSPI Futures. All rights reserved.</p>
+</footer>
+
+<script src="assets/nav.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/derivatives.js"></script>
+<script type="module" src="assets/firebase-init.js"></script>
+</body>
+</html>

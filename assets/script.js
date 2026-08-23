@@ -126,17 +126,6 @@ if ('scrollRestoration' in history) {
       applyQuote('tUsSemi', q.ussemi, 2);
       setText('tickerSync', stamp);
 
-      // Range & volatility context for KOSPI 200
-      if (q.kospi200) {
-        var k = q.kospi200;
-        setText('rvDayRange', fmtNumber(k.dayLow, 2) + ' – ' + fmtNumber(k.dayHigh, 2));
-        setText('rvWeekRange', fmtNumber(k.weekLow52, 2) + ' – ' + fmtNumber(k.weekHigh52, 2));
-        setText('rvVolume', k.volume ? Math.round(k.volume).toLocaleString('en-US') : '—');
-        if (k.weekHigh52) {
-          var fromHigh = ((k.price - k.weekHigh52) / k.weekHigh52) * 100;
-          setText('rvFromHigh', fmtPercent(fromHigh) + ' from 52-wk high');
-        }
-      }
       setText('dataAsOf', 'Data as of ' + stamp + ' — source: Yahoo Finance');
 
       // Signal cards: timestamp only, states remain a sample until the
@@ -148,6 +137,28 @@ if ('scrollRestoration' in history) {
     })
     .catch(function () {
       setText('heroTimestamp', 'Live data unavailable');
+    });
+
+  // Range & volatility comes from LS rather than Yahoo — Yahoo's 52-week
+  // fields for ^KS200 mirrored the day's range instead of the real one.
+  fetch('/api/ls')
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      if (data.error) throw new Error('unavailable');
+      var idx = data.index || {};
+      setText('rvDayRange', fmtNumber(idx.low, 2) + ' – ' + fmtNumber(idx.high, 2));
+      setText('rvWeekRange', fmtNumber(idx.yearLow, 2) + ' – ' + fmtNumber(idx.yearHigh, 2));
+      setText('rvVolume', idx.volume ? Math.round(idx.volume).toLocaleString('en-US') : '—');
+      if (idx.yearHigh && idx.price) {
+        var fromHigh = ((idx.price - idx.yearHigh) / idx.yearHigh) * 100;
+        setText('rvFromHigh', fmtPercent(fromHigh) + ' from 52-wk high');
+      }
+      setText(
+        'dataAsOf',
+        'Data as of ' + formatTimestamp(new Date()) + ' — source: LS Securities Open API'
+      );
+    })
+    .catch(function () {
       setText('dataAsOf', 'Live data unavailable');
     });
 })();

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Range &amp; Volatility — KOSPI Futures</title>
+<meta name="description" content="KOSPI 200 realized volatility, option-implied volatility, and daily trading ranges.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="sidebar">
+    <span></span><span></span><span></span>
+  </button>
+  <a class="brand" href="index.html#home">KOSPI <strong>FUTURES</strong></a>
+  <nav class="top-nav" aria-label="Primary">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#about">About</a>
+  </nav>
+  <div class="auth-area" id="authArea"></div>
+</header>
+
+<div class="layout">
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Section">
+      <p class="sidebar-title">Market Overview</p>
+      <ul>
+        <li><a href="index.html#home">Home</a></li>
+      </ul>
+
+      <p class="sidebar-title">Trading Signals</p>
+      <ul>
+        <li><a href="index.html#signals">Trading Signals</a></li>
+      </ul>
+
+      <p class="sidebar-title">Market Data</p>
+      <ul>
+        <li><a href="range-volatility.html">Range &amp; Volatility</a></li>
+        <li><a href="daily-summary.html">Daily Summary</a></li>
+        <li><a href="historical-data.html">Historical Data</a></li>
+        <li><a href="derivatives.html">Derivatives Board</a></li>
+      </ul>
+
+      <p class="sidebar-title">Archives</p>
+      <ul>
+        <li><a href="records.html">Records</a></li>
+        <li><a href="winning-rate.html">Winning Rate of the Day</a></li>
+      </ul>
+
+      <p class="sidebar-title">Tools</p>
+      <ul>
+        <li><a href="stock-finder.html">Stock Finder</a></li>
+        <li><a href="economic-calendar.html">Economic Calendar</a></li>
+      </ul>
+
+      <p class="sidebar-title">Resources</p>
+      <ul>
+        <li><a href="index.html#news">News &amp; Release</a></li>
+        <li><a href="index.html#methodology">Signal Methodology</a></li>
+        <li><a href="index.html#faq">FAQ</a></li>
+      </ul>
+
+      <p class="sidebar-title">Support</p>
+      <ul>
+        <li><a href="index.html#about">About</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main>
+
+    <section class="page-header">
+      <h1>Range &amp; Volatility</h1>
+      <p class="section-sub">How far KOSPI 200 is actually moving — and how much movement the options market is pricing in.</p>
+    </section>
+
+    <!-- The headline comparison: what happened vs. what's expected -->
+    <section class="rv-compare">
+      <div class="rv-compare-card">
+        <span class="ds-label">Realized Volatility · 20-day</span>
+        <span class="rv-big" id="rvRealized20">—</span>
+        <span class="rv-sub" id="rvRealized20Note">annualized, from daily closes</span>
+      </div>
+      <div class="rv-compare-op" id="rvVsOp">vs</div>
+      <div class="rv-compare-card">
+        <span class="ds-label">Implied Volatility · options</span>
+        <span class="rv-big" id="rvImplied">—</span>
+        <span class="rv-sub" id="rvImpliedNote">average across the front-month chain</span>
+      </div>
+      <p class="rv-verdict" id="rvVerdict">—</p>
+    </section>
+
+    <section class="content-grid">
+      <div class="content-main">
+
+        <!-- Realized volatility across horizons -->
+        <div class="panel">
+          <h2>Realized Volatility by Horizon</h2>
+          <p class="section-sub">Annualized standard deviation of daily returns. Short vs. long tells you whether the market is speeding up or calming down.</p>
+          <table class="data-table">
+            <thead>
+              <tr><th>Window</th><th>Annualized Vol</th><th>Avg. Daily Move</th><th>vs. 20-Day</th></tr>
+            </thead>
+            <tbody id="rvHorizonBody">
+              <tr><td colspan="4">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Daily range behaviour -->
+        <div class="panel">
+          <h2>Daily Range Behaviour</h2>
+          <p class="section-sub">How wide each session ran, and where the close landed inside that range.</p>
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr><th>Date</th><th>Range</th><th>Width</th><th>Width %</th><th>Close Position</th></tr>
+              </thead>
+              <tbody id="rvRangeBody">
+                <tr><td colspan="5">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="ds-range-note">Close position shows where the session settled between its low (0%) and high (100%) — persistent highs or lows hint at directional pressure.</p>
+        </div>
+
+      </div>
+
+      <aside class="content-aside">
+        <div class="panel">
+          <h3>Expected Move</h3>
+          <p class="section-sub">What the options market implies over the coming session and month.</p>
+          <table class="data-table">
+            <tbody>
+              <tr><td>1-Day (±)</td><td id="rvExp1d">—</td></tr>
+              <tr><td>1-Week (±)</td><td id="rvExp1w">—</td></tr>
+              <tr><td>To Expiry (±)</td><td id="rvExpExpiry">—</td></tr>
+              <tr><td>Days to Expiry</td><td id="rvDte">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>Range Statistics · 20 Days</h3>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Avg. Daily Range</td><td id="rvAvgRange">—</td></tr>
+              <tr><td>Widest Session</td><td id="rvWidest">—</td></tr>
+              <tr><td>Narrowest Session</td><td id="rvNarrowest">—</td></tr>
+              <tr><td>Sessions Above Avg.</td><td id="rvAboveAvg">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <h3>52-Week Position</h3>
+          <div class="ds-range-block">
+            <div class="ds-range-head">
+              <span class="ds-label">Range</span>
+              <span class="ds-range-ends"><span id="rvYearLow">—</span> — <span id="rvYearHigh">—</span></span>
+            </div>
+            <div class="ds-range-track"><span class="ds-range-marker" id="rvYearMarker"></span></div>
+            <p class="ds-range-note" id="rvYearNote">—</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <p class="sample-tag" id="rvAsOf">Loading…</p>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  <nav aria-label="Footer">
+    <a href="index.html#home">Home</a>
+    <a href="index.html#signals">Signals</a>
+    <a href="index.html#data">Data</a>
+    <a href="index.html#news">News</a>
+    <a href="index.html#methodology">Methodology</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="index.html#about">About</a>
+    <a href="index.html#contact">Contact</a>
+  </nav>
+  <p class="disclaimer">Market data shown is for informational purposes only and is not investment advice. Any investment decisions you make are your own responsibility.</p>
+  <p class="copyright">&copy; 2026 KOSPI Futures. All rights reserved.</p>
+</footer>
+
+<script src="assets/nav.js"></script>
+<script src="assets/common.js"></script>
+<script src="assets/range-volatility.js"></script>
+<script type="module" src="assets/firebase-init.js"></script>
+</body>
+</html>
