@@ -289,6 +289,29 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 't8433') {
+      // Option master list — hopefully carries both call and put codes.
+      const r = await callTR(token, 't8433', '/futureoption/market-data', {
+        t8433InBlock: { dummy: req.query.dummy || '' },
+      });
+      const rows = r?.body?.t8433OutBlock || [];
+      const prefixes = {};
+      rows.forEach((x) => {
+        const p = String(x.shcode || '').slice(0, 2);
+        prefixes[p] = (prefixes[p] || 0) + 1;
+      });
+      res.status(200).json({
+        which,
+        msg: r?.body?.rsp_msg,
+        count: rows.length,
+        codePrefixCounts: prefixes,
+        samples: rows.slice(0, 6).map((x) => ({
+          shcode: x.shcode, hname: x.hname, expcode: x.expcode,
+        })),
+      });
+      return;
+    }
+
     if (which === 'findcalls') {
       // Every gubun tried so far returns puts (all deltas negative).
       // Sweep a wider set and report the delta sign, which is the only
