@@ -55,6 +55,22 @@ async function callTR(token, trCode, accessUrl, inBlock) {
 module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const which = req.query.which || 't8424';
+
+  if (which === 'env') {
+    // Diagnostic only — reports presence/shape, never the values themselves.
+    const k = process.env.LS_APP_KEY;
+    const s = process.env.LS_APP_SECRET;
+    res.status(200).json({
+      which: 'env',
+      LS_APP_KEY: { present: !!k, length: k ? k.length : 0 },
+      LS_APP_SECRET: { present: !!s, length: s ? s.length : 0 },
+      lsKeysSeen: Object.keys(process.env).filter((n) => n.startsWith('LS_')),
+      vercelEnv: process.env.VERCEL_ENV || null,
+      gitBranch: process.env.VERCEL_GIT_COMMIT_REF || null,
+    });
+    return;
+  }
+
   const gubun1 = req.query.gubun1 ?? '';
   const upcode = req.query.upcode ?? '';
 
