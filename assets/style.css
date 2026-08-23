@@ -1272,3 +1272,8 @@ main {
 .risk-disclosure p:last-child { margin-bottom: 0; }
 
 .risk-disclosure strong { color: var(--text); }
+
+/* Single-sided OI chart (when only one side of the book is published) */
+.dv-oi-row.single {
+  grid-template-columns: 74px 1fr;
+}

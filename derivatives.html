@@ -108,7 +108,7 @@
     <!-- Open interest walls: the levels that act as magnets/barriers -->
     <section class="panel">
       <h2>Open Interest by Strike</h2>
-      <p class="section-sub">Large put open interest tends to act as support, large call open interest as resistance. The tallest bars are where the market has the most at stake.</p>
+      <p class="section-sub">Strikes carrying large put open interest often act as support — that's where the market has the most at stake. See Data Coverage below for which side our feed publishes.</p>
       <div class="dv-oi-chart" id="dvOiChart">
         <p class="ds-range-note">Loading…</p>
       </div>
@@ -188,6 +188,11 @@
           <h3>How to Read This</h3>
           <p class="dv-help"><strong>Put/Call OI above 1</strong> means more open puts than calls — often defensive positioning, though it can also mark a crowded hedge that unwinds sharply.</p>
           <p class="dv-help"><strong>Max pain</strong> is the strike where the largest total value of options would expire worthless. Price sometimes drifts toward it into expiry.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Data Coverage</h3>
+          <p class="dv-help" id="dvCoverage">Loading…</p>
         </div>
       </aside>
     </section>

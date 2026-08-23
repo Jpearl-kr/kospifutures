@@ -41,8 +41,13 @@
       return (r.call && r.call.openInterest) || (r.put && r.put.openInterest);
     });
 
+    // Our data source publishes open interest and greeks on the put side
+    // only, so anything derived from call OI can't be computed honestly.
+    var cov = data.coverage || {};
+    var hasCallOI = cov.callsHaveOpenInterest !== false;
+
     // ---- headline stats -------------------------------------------------
-    if (s.putCallOIRatio !== null && s.putCallOIRatio !== undefined) {
+    if (hasCallOI && s.putCallOIRatio !== null && s.putCallOIRatio !== undefined) {
       K.setText('dvPcOi', s.putCallOIRatio.toFixed(2));
       K.setText(
         'dvPcOiNote',
@@ -52,21 +57,29 @@
           ? 'call-heavy positioning'
           : 'balanced positioning'
       );
-    }
-    if (s.putCallVolumeRatio !== null && s.putCallVolumeRatio !== undefined) {
-      K.setText('dvPcVol', s.putCallVolumeRatio.toFixed(2));
+    } else {
+      K.setText('dvPcOi', 'n/a');
+      K.setText('dvPcOiNote', 'call open interest not published on this feed');
     }
 
-    var mp = active.length ? maxPain(active) : null;
+    if (s.putCallVolumeRatio !== null && s.putCallVolumeRatio !== undefined) {
+      K.setText('dvPcVol', s.putCallVolumeRatio.toFixed(2));
+    } else {
+      K.setText('dvPcVol', 'n/a');
+    }
+
+    // Max pain needs both sides to mean anything — with puts alone it
+    // would just point at the lowest strike.
+    var mp = hasCallOI && active.length ? maxPain(active) : null;
     if (mp) {
       K.setText('dvMaxPain', K.fmtNumber(mp.strike));
       if (u.price) {
         var dist = ((mp.strike - u.price) / u.price) * 100;
-        K.setText(
-          'dvMaxPainNote',
-          K.fmtPercent(dist) + ' from spot'
-        );
+        K.setText('dvMaxPainNote', K.fmtPercent(dist) + ' from spot');
       }
+    } else {
+      K.setText('dvMaxPain', 'n/a');
+      K.setText('dvMaxPainNote', 'needs call and put open interest');
     }
 
     K.setText('dvDte', u.daysToExpiry !== null && u.daysToExpiry !== undefined ? u.daysToExpiry + ' days' : '—');
@@ -93,6 +106,18 @@
         var putOi = r.put ? r.put.openInterest || 0 : 0;
         var isSpot = u.price && Math.abs(r.strike - u.price) ===
           Math.min.apply(null, near.map(function (x) { return Math.abs(x.strike - u.price); }));
+
+        // Without call OI a mirrored layout would be half empty, so fall
+        // back to a single-sided bar chart of put open interest.
+        if (!hasCallOI) {
+          return '<div class="dv-oi-row single' + (isSpot ? ' spot' : '') + '">' +
+            '<div class="dv-oi-strike">' + K.fmtNumber(r.strike, 1) + '</div>' +
+            '<div class="dv-oi-side right"><span class="dv-oi-bar put" style="width:' +
+              (maxOi ? (putOi / maxOi) * 100 : 0) + '%"></span>' +
+              '<span class="dv-oi-num">' + (putOi ? fmtOi(putOi) : '') + '</span></div>' +
+            '</div>';
+        }
+
         return '<div class="dv-oi-row' + (isSpot ? ' spot' : '') + '">' +
           '<div class="dv-oi-side left"><span class="dv-oi-bar call" style="width:' +
             (maxOi ? (callOi / maxOi) * 100 : 0) + '%"></span>' +
@@ -104,6 +129,13 @@
           '</div>';
       }).join('');
       chartEl.innerHTML = rowsHtml;
+
+      // Keep the legend honest about which series is actually drawn.
+      var legend = document.querySelector('.dv-oi-legend');
+      if (legend && !hasCallOI) {
+        legend.innerHTML = '<span><i class="dot down"></i> Put OI</span>' +
+          '<span><i class="dot spot"></i> Nearest spot</span>';
+      }
     } else {
       chartEl.innerHTML = '<p class="ds-range-note">No open interest reported for this expiry.</p>';
     }
@@ -184,15 +216,28 @@
     }
 
     // ---- aside tables -----------------------------------------------------
-    K.setText('dvCallOi', fmtOi(s.callOpenInterest));
+    K.setText('dvCallOi', hasCallOI ? fmtOi(s.callOpenInterest) : 'n/a');
     K.setText('dvPutOi', fmtOi(s.putOpenInterest));
-    if (s.maxCallOI) K.setText('dvPeakCall', K.fmtNumber(s.maxCallOI.strike, 1) + ' · ' + fmtOi(s.maxCallOI.oi));
+    K.setText(
+      'dvPeakCall',
+      s.maxCallOI ? K.fmtNumber(s.maxCallOI.strike, 1) + ' · ' + fmtOi(s.maxCallOI.oi) : 'n/a'
+    );
     if (s.maxPutOI) K.setText('dvPeakPut', K.fmtNumber(s.maxPutOI.strike, 1) + ' · ' + fmtOi(s.maxPutOI.oi));
 
     K.setText('dvCallIv', u.callIv ? u.callIv.toFixed(2) + '%' : '—');
     K.setText('dvPutIv', u.putIv ? u.putIv.toFixed(2) + '%' : '—');
     K.setText('dvAvgIv', s.averageIv ? s.averageIv.toFixed(2) + '%' : '—');
     K.setText('dvHistVol', u.histVol ? u.histVol.toFixed(2) + '%' : '—');
+
+    // Say plainly which side the detailed data covers.
+    var covEl = document.getElementById('dvCoverage');
+    if (covEl && !hasCallOI) {
+      covEl.textContent =
+        'Open interest, implied volatility, and greeks are published for the put side only on our data feed. ' +
+        'Call rows show last price and volume where available' +
+        (cov.callsPriced ? ' (' + cov.callsPriced + ' strikes priced)' : '') +
+        '. Figures that need both sides — put/call ratio on open interest, and max pain — are marked n/a rather than computed from puts alone.';
+    }
 
     K.setText(
       'dvAsOf',
