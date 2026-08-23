@@ -307,6 +307,41 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'official') {
+      // LS's own API guide lists t2111 (선물/옵션현재가) and t2424
+      // (미결제약정추이) — the codes I'd been using (t2101/t2421) came
+      // from a community catalogue and don't exist.
+      const sleep2 = (ms) => new Promise((r) => setTimeout(r, ms));
+      const callCode = req.query.call || 'B0169A34';
+      const putCode = req.query.put || 'C0169A34';
+
+      const attempts = [
+        { label: 't2111 / call', tr: 't2111', block: { t2111InBlock: { focode: callCode } } },
+        { label: 't2111 / put', tr: 't2111', block: { t2111InBlock: { focode: putCode } } },
+      ];
+
+      const results = [];
+      for (const a of attempts) {
+        const r = await callTR(token, a.tr, '/futureoption/market-data', a.block);
+        const body = r?.body || {};
+        const out = body.t2111OutBlock || null;
+        results.push({
+          attempt: a.label,
+          msg: body.rsp_msg,
+          hname: out?.hname ?? null,
+          price: out?.price ?? null,
+          openInterest: out?.mgjv ?? null,
+          volume: out?.volume ?? null,
+          iv: out?.impv ?? null,
+          delta: out?.delt ?? null,
+          outKeys: out ? Object.keys(out).slice(0, 25) : null,
+        });
+        await sleep2(400);
+      }
+      res.status(200).json({ which, callCode, putCode, results });
+      return;
+    }
+
     if (which === 'boardprobe') {
       // Only t2301 / t8433 / t8434 are enabled on this account. t2301's
       // documented input is just {yyyymm, gubun} — try feeding it the
