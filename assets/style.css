@@ -1252,3 +1252,23 @@ main {
   transition: color .12s ease;
 }
 .sidebar li a:hover .sb-icon { color: var(--primary); }
+
+/* Risk disclosure ------------------------------------------------- */
+
+.risk-disclosure {
+  max-width: 1000px;
+  margin: 1.5rem auto 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  text-align: left;
+}
+
+.risk-disclosure p {
+  font-size: .72rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0 0 .6rem;
+}
+.risk-disclosure p:last-child { margin-bottom: 0; }
+
+.risk-disclosure strong { color: var(--text); }
