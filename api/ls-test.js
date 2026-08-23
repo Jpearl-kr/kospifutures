@@ -207,6 +207,9 @@ module.exports = async (req, res) => {
     }
 
     if (which === 'sweep8419') {
+      // t1514/t8419 are rate-limited to ~1 req/sec, so space the probes out
+      // — earlier sweeps failed on quota, not on bad params.
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       const combos = ['0', '1', '2', '3'];
       const results = [];
       for (const g of combos) {
@@ -228,6 +231,7 @@ module.exports = async (req, res) => {
           rowCount: rows.length,
           firstRow: rows[0] || null,
         });
+        await sleep(1200);
       }
       res.status(200).json({ which, upcode, results });
       return;
