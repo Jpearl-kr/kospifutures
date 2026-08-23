@@ -289,6 +289,26 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'sweep8435') {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const results = [];
+      for (const g of ['0', '1', '2', '3', '4', 'F', 'O']) {
+        const r = await callTR(token, 't8435', '/futureoption/market-data', {
+          t8435InBlock: { gubun: g },
+        });
+        const rows = r?.body?.t8435OutBlock || [];
+        results.push({
+          gubun: g,
+          msg: r?.body?.rsp_msg,
+          count: rows.length,
+          samples: rows.slice(0, 3).map((x) => ({ shcode: x.shcode, hname: x.hname, expcode: x.expcode })),
+        });
+        await sleep(600);
+      }
+      res.status(200).json({ which, results });
+      return;
+    }
+
     res.status(400).json({ error: 'unknown which=' + which });
   } catch (err) {
     res.status(200).json({ error: true, message: String(err && err.message || err) });
