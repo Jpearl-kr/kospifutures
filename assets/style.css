@@ -1277,3 +1277,11 @@ main {
 .dv-oi-row.single {
   grid-template-columns: 74px 1fr;
 }
+
+.risk-heading {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 .75rem;
+  letter-spacing: .01em;
+}
