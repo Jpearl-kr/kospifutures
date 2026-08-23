@@ -180,6 +180,59 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 'sweep1514') {
+      // Try several gubun1/gubun2/rate_gbn combos to find which one the
+      // index-history TR actually accepts for this upcode.
+      const combos = [];
+      for (const g1 of ['0', '1', '2']) {
+        for (const g2 of ['0', '1']) {
+          combos.push({ gubun1: g1, gubun2: g2, rate_gbn: '0' });
+        }
+      }
+      const results = [];
+      for (const c of combos) {
+        const r = await callTR(token, 't1514', '/indtp/market-data', {
+          t1514InBlock: { upcode, cts_date: '', cnt: 3, ...c },
+        });
+        const rows = r?.body?.t1514OutBlock1 || [];
+        results.push({
+          ...c,
+          msg: r?.body?.rsp_msg,
+          rowCount: rows.length,
+          firstRow: rows[0] || null,
+        });
+      }
+      res.status(200).json({ which, upcode, results });
+      return;
+    }
+
+    if (which === 'sweep8419') {
+      const combos = ['0', '1', '2', '3'];
+      const results = [];
+      for (const g of combos) {
+        const r = await callTR(token, 't8419', '/indtp/chart', {
+          t8419InBlock: {
+            shcode: upcode,
+            gubun: g,
+            qrycnt: 10,
+            sdate: '',
+            edate: '',
+            cts_date: '',
+            comp_yn: 'N',
+          },
+        });
+        const rows = r?.body?.t8419OutBlock1 || [];
+        results.push({
+          gubun: g,
+          msg: r?.body?.rsp_msg,
+          rowCount: rows.length,
+          firstRow: rows[0] || null,
+        });
+      }
+      res.status(200).json({ which, upcode, results });
+      return;
+    }
+
     res.status(400).json({ error: 'unknown which=' + which });
   } catch (err) {
     res.status(200).json({ error: true, message: String(err && err.message || err) });
