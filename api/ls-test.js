@@ -289,6 +289,50 @@ module.exports = async (req, res) => {
       return;
     }
 
+    if (which === 't8434') {
+      // Multi-quote by code list — the way to price the call side, whose
+      // codes come from the t8433 master.
+      const r = await callTR(token, 't8434', '/futureoption/market-data', {
+        t8434InBlock: {
+          qrycnt: Number(req.query.qrycnt || 5),
+          focode: req.query.focode || '',
+        },
+      });
+      res.status(200).json({
+        which,
+        msg: r?.body?.rsp_msg,
+        sent: req.query.focode,
+        rows: r?.body?.t8434OutBlock1 || [],
+      });
+      return;
+    }
+
+    if (which === 'callcodes') {
+      // Pull the master and report the call (BO…) entries for the
+      // front-month expiry, with their strikes parsed from hname.
+      const r = await callTR(token, 't8433', '/futureoption/market-data', {
+        t8433InBlock: { dummy: '' },
+      });
+      const rows = r?.body?.t8433OutBlock || [];
+      const calls = rows.filter((x) => String(x.shcode || '').startsWith('BO'));
+      const parse = (x) => {
+        const m = String(x.hname || '').match(/^([CP])\s+(\d+)\s+([\d.]+)/);
+        return m
+          ? { shcode: x.shcode, side: m[1], expiry: m[2], strike: Number(m[3]) }
+          : { shcode: x.shcode, hname: x.hname };
+      };
+      const parsed = calls.map(parse).filter((x) => x.expiry);
+      const expiries = {};
+      parsed.forEach((x) => { expiries[x.expiry] = (expiries[x.expiry] || 0) + 1; });
+      res.status(200).json({
+        which,
+        totalCalls: calls.length,
+        expiryCounts: expiries,
+        sample: parsed.slice(0, 5),
+      });
+      return;
+    }
+
     if (which === 't8433') {
       // Option master list — hopefully carries both call and put codes.
       const r = await callTR(token, 't8433', '/futureoption/market-data', {
