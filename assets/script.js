@@ -146,13 +146,50 @@ if ('scrollRestoration' in history) {
     .then(function (data) {
       if (data.error) throw new Error('unavailable');
       var idx = data.index || {};
-      setText('rvDayRange', fmtNumber(idx.low, 2) + ' – ' + fmtNumber(idx.high, 2));
-      setText('rvWeekRange', fmtNumber(idx.yearLow, 2) + ' – ' + fmtNumber(idx.yearHigh, 2));
-      setText('rvVolume', idx.volume ? Math.round(idx.volume).toLocaleString('en-US') : '—');
+
+      // Position the price along each range so the reader sees where it
+      // sits without doing the arithmetic themselves.
+      function placeOn(low, high, value, fillId, dotId) {
+        if (!low || !high || !value || high <= low) return null;
+        var pct = Math.max(0, Math.min(100, ((value - low) / (high - low)) * 100));
+        var fill = document.getElementById(fillId);
+        var dot = document.getElementById(dotId);
+        if (fill) fill.style.width = pct + '%';
+        if (dot) dot.style.left = pct + '%';
+        return pct;
+      }
+
+      setText('rvDayLow', fmtNumber(idx.low, 2));
+      setText('rvDayHigh', fmtNumber(idx.high, 2));
+      var dayPct = placeOn(idx.low, idx.high, idx.price, 'rvDayFill', 'rvDayDot');
+
+      setText('rvYearLowMini', fmtNumber(idx.yearLow, 2));
+      setText('rvYearHighMini', fmtNumber(idx.yearHigh, 2));
+      placeOn(idx.yearLow, idx.yearHigh, idx.price, 'rvYearFill', 'rvYearDot');
+
       if (idx.yearHigh && idx.price) {
         var fromHigh = ((idx.price - idx.yearHigh) / idx.yearHigh) * 100;
-        setText('rvFromHigh', fmtPercent(fromHigh) + ' from 52-wk high');
+        setText('rvFromHigh', fmtPercent(fromHigh));
+        setChangeClass('rvFromHigh', fromHigh);
       }
+
+      if (idx.high && idx.low && idx.prevClose) {
+        var width = idx.high - idx.low;
+        setText('rvRangeToday', ((width / idx.prevClose) * 100).toFixed(2) + '%');
+      }
+
+      if (dayPct !== null) {
+        setText('rvClosePos', dayPct.toFixed(0) + '%');
+        var posEl = document.getElementById('rvClosePos');
+        if (posEl) {
+          posEl.classList.remove('up', 'down');
+          if (dayPct >= 70) posEl.classList.add('up');
+          else if (dayPct <= 30) posEl.classList.add('down');
+        }
+      }
+
+      setText('rvVolume', idx.volume ? Math.round(idx.volume).toLocaleString('en-US') : '—');
+
       setText(
         'dataAsOf',
         'Data as of ' + formatTimestamp(new Date()) + ' — source: LS Securities Open API'

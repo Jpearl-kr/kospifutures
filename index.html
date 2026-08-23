@@ -155,14 +155,47 @@
             <h2>KOSPI 200 — Range &amp; Volatility</h2>
             <a class="btn-secondary" href="range-volatility.html">Full breakdown →</a>
           </div>
-          <table class="data-table">
-            <tbody>
-              <tr><td>Day Range</td><td id="rvDayRange">—</td></tr>
-              <tr><td>52-Week Range</td><td id="rvWeekRange">—</td></tr>
-              <tr><td>Volume</td><td id="rvVolume">—</td></tr>
-              <tr><td>vs. 52-Week High</td><td id="rvFromHigh">—</td></tr>
-            </tbody>
-          </table>
+
+          <div class="rv-mini">
+            <div class="rv-mini-row">
+              <span class="rv-mini-label">Today</span>
+              <span class="rv-mini-ends" id="rvDayLow">—</span>
+              <div class="rv-mini-track">
+                <span class="rv-mini-fill" id="rvDayFill"></span>
+                <span class="rv-mini-dot" id="rvDayDot"></span>
+              </div>
+              <span class="rv-mini-ends" id="rvDayHigh">—</span>
+            </div>
+            <div class="rv-mini-row">
+              <span class="rv-mini-label">52 weeks</span>
+              <span class="rv-mini-ends" id="rvYearLowMini">—</span>
+              <div class="rv-mini-track">
+                <span class="rv-mini-fill" id="rvYearFill"></span>
+                <span class="rv-mini-dot" id="rvYearDot"></span>
+              </div>
+              <span class="rv-mini-ends" id="rvYearHighMini">—</span>
+            </div>
+          </div>
+
+          <div class="rv-mini-stats">
+            <div class="rv-mini-stat">
+              <span class="rv-mini-stat-value" id="rvFromHigh">—</span>
+              <span class="rv-mini-stat-label">from 52-wk high</span>
+            </div>
+            <div class="rv-mini-stat">
+              <span class="rv-mini-stat-value" id="rvRangeToday">—</span>
+              <span class="rv-mini-stat-label">today's range</span>
+            </div>
+            <div class="rv-mini-stat">
+              <span class="rv-mini-stat-value" id="rvClosePos">—</span>
+              <span class="rv-mini-stat-label">close in range</span>
+            </div>
+            <div class="rv-mini-stat">
+              <span class="rv-mini-stat-value" id="rvVolume">—</span>
+              <span class="rv-mini-stat-label">volume</span>
+            </div>
+          </div>
+
           <p class="sample-tag" id="dataAsOf">Loading…</p>
         </div>
 
