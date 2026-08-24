@@ -39,6 +39,35 @@ module.exports = async (req, res) => {
   const which = req.query.which;
 
   try {
+    if (which === 'optdebug') {
+      // Pin down why the KOSPI 200 option filter comes back empty.
+      const basDd = req.query.basDd || '20260821';
+      const rows = await callKrx('/drv/opt_bydd_trd', { basDd });
+      const bare = (s) => String(s || '').replace(/\s/g, '');
+      const k200ish = rows.filter((r) => bare(r.PROD_NM).includes('코스피200'));
+      const exact = rows.filter((r) => bare(r.PROD_NM) === '코스피200옵션');
+      const strikeRe = /([\d,]+\.?\d*)\s*$/;
+      res.status(200).json({
+        which,
+        basDd,
+        totalRows: rows.length,
+        bareProdNames: [...new Set(rows.map((r) => bare(r.PROD_NM)))],
+        k200ishCount: k200ish.length,
+        exactCount: exact.length,
+        exactWithNight: exact.filter((r) => (r.ISU_NM || '').includes('야간')).length,
+        exactHasMktNm: exact.length ? Object.prototype.hasOwnProperty.call(exact[0], 'MKT_NM') : null,
+        exactSamples: exact.slice(0, 5).map((r) => ({
+          ISU_NM: r.ISU_NM,
+          RGHT_TP_NM: r.RGHT_TP_NM,
+          strikeMatch: (String(r.ISU_NM || '').match(strikeRe) || [null, null])[1],
+          TDD_CLSPRC: r.TDD_CLSPRC,
+          IMP_VOLT: r.IMP_VOLT,
+          ACC_OPNINT_QTY: r.ACC_OPNINT_QTY,
+        })),
+      });
+      return;
+    }
+
     if (which === 'k200prods') {
       // Confirm the exact PROD_NM strings and session split (정규 vs 야간)
       // for KOSPI 200 futures/options before filtering on them for real.
