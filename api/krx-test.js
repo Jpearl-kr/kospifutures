@@ -39,6 +39,17 @@ module.exports = async (req, res) => {
   const which = req.query.which;
 
   try {
+    if (which === 'env') {
+      const key = process.env.KRX_API_KEY;
+      res.status(200).json({
+        which,
+        present: !!key,
+        length: key ? key.length : 0,
+        vercelEnv: process.env.VERCEL_ENV || null,
+      });
+      return;
+    }
+
     if (which === 'idxkospi') {
       // The one endpoint confirmed from public write-ups. If basDd is
       // explicitly given, use it as-is; otherwise walk back from
@@ -63,6 +74,7 @@ module.exports = async (req, res) => {
         basDd,
         triedDates,
         status: r.status,
+        errorBody: r.status !== 200 ? r.json : undefined,
         rawSnippet: r.rawSnippet,
         rowCount: rows.length,
         allNames: [...new Set(rows.map((x) => x.IDX_NM))],
