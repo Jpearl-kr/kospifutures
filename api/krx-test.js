@@ -39,6 +39,26 @@ module.exports = async (req, res) => {
   const which = req.query.which;
 
   try {
+    if (which === 'stocksweep') {
+      // Market breadth needs per-stock daily moves; find the equity feed.
+      const basDd = req.query.basDd || '20260821';
+      const paths = ['/sto/stk_bydd_trd', '/sto/ksq_bydd_trd', '/sto/stk_isu_base_info'];
+      const results = [];
+      for (const p of paths) {
+        const r = await callKrx(p, { basDd });
+        const rows = r.json?.OutBlock_1 || [];
+        results.push({
+          path: p,
+          status: r.status,
+          rowCount: rows.length,
+          sampleKeys: rows[0] ? Object.keys(rows[0]) : [],
+          sampleRow: rows[0] || null,
+        });
+      }
+      res.status(200).json({ which, basDd, results });
+      return;
+    }
+
     if (which === 'optdebug') {
       // Pin down why the KOSPI 200 option filter comes back empty.
       const basDd = req.query.basDd || '20260821';
