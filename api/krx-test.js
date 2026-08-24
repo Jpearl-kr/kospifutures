@@ -39,6 +39,34 @@ module.exports = async (req, res) => {
   const which = req.query.which;
 
   try {
+    if (which === 'k200prods') {
+      // Confirm the exact PROD_NM strings and session split (정규 vs 야간)
+      // for KOSPI 200 futures/options before filtering on them for real.
+      const basDd = req.query.basDd || recentBizDate(3);
+      const [fut, opt] = await Promise.all([
+        callKrx('/drv/fut_bydd_trd', { basDd }),
+        callKrx('/drv/opt_bydd_trd', { basDd }),
+      ]);
+      const futRows = fut.json?.OutBlock_1 || [];
+      const optRows = opt.json?.OutBlock_1 || [];
+
+      const futK200 = futRows.filter((r) => (r.PROD_NM || '').includes('코스피 200') && !(r.PROD_NM || '').includes('미니'));
+      const optK200 = optRows.filter((r) => (r.PROD_NM || '').includes('코스피 200') && !(r.PROD_NM || '').includes('미니'));
+
+      res.status(200).json({
+        which,
+        basDd,
+        allFutProdNames: [...new Set(futRows.map((r) => r.PROD_NM))],
+        allOptProdNames: [...new Set(optRows.map((r) => r.PROD_NM))],
+        futK200Count: futK200.length,
+        futK200Sample: futK200.slice(0, 5),
+        optK200Count: optK200.length,
+        optK200Sample: optK200.slice(0, 6),
+        optK200SessionSplit: [...new Set(optK200.map((r) => r.MKT_NM))],
+      });
+      return;
+    }
+
     if (which === 'env') {
       const key = process.env.KRX_API_KEY;
       res.status(200).json({
