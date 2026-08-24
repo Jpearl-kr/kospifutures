@@ -42,7 +42,8 @@ module.exports = async (req, res) => {
     if (which === 'optdebug') {
       // Pin down why the KOSPI 200 option filter comes back empty.
       const basDd = req.query.basDd || '20260821';
-      const rows = await callKrx('/drv/opt_bydd_trd', { basDd });
+      const resp = await callKrx('/drv/opt_bydd_trd', { basDd });
+      const rows = resp.json?.OutBlock_1 || [];
       const bare = (s) => String(s || '').replace(/\s/g, '');
       const k200ish = rows.filter((r) => bare(r.PROD_NM).includes('코스피200'));
       const exact = rows.filter((r) => bare(r.PROD_NM) === '코스피200옵션');
