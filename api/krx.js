@@ -32,8 +32,12 @@ const num = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
-const K200 = '코스피 200';
-const isK200 = (name) => (name || '').includes(K200) && !(name || '').includes('미니');
+// Product names drop the space the index name carries ("코스피200 선물"
+// vs "코스피 200"), so compare with whitespace removed. Weekly options are
+// separate products and are excluded from the standard monthly chain.
+const bare = (s) => String(s || '').replace(/\s/g, '');
+const isK200Fut = (name) => bare(name) === '코스피200선물';
+const isK200Opt = (name) => bare(name) === '코스피200옵션';
 // The feed carries both the day and overnight sessions; the regular
 // session is the one that matches the published index close.
 const isRegular = (r) => !(r.ISU_NM || '').includes('야간') && r.MKT_NM !== '야간';
@@ -124,7 +128,7 @@ module.exports = async (req, res) => {
     if (include.includes('futures')) {
       const rows = await callKrx('/drv/fut_bydd_trd', { basDd });
       payload.futures = rows
-        .filter((r) => isK200(r.PROD_NM) && isRegular(r))
+        .filter((r) => isK200Fut(r.PROD_NM) && isRegular(r))
         .map((r) => ({
           code: r.ISU_CD,
           name: r.ISU_NM,
@@ -145,7 +149,7 @@ module.exports = async (req, res) => {
     if (include.includes('options')) {
       const rows = await callKrx('/drv/opt_bydd_trd', { basDd });
       const chain = rows
-        .filter((r) => isK200(r.PROD_NM) && isRegular(r))
+        .filter((r) => isK200Opt(r.PROD_NM) && isRegular(r))
         .map((r) => {
           // Strike is the trailing number in "코스피200 C 202609 400.0".
           const m = String(r.ISU_NM || '').match(/([\d,]+\.?\d*)\s*$/);
