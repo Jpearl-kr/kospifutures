@@ -78,7 +78,7 @@
 
     <section class="page-header">
       <h1>Derivatives Board</h1>
-      <p class="section-sub">KOSPI 200 front-month options — where positions are built, and what they say about expected direction.</p>
+      <p class="section-sub">KOSPI 200 front-month options as of the last exchange close — where positions are built, and what they say about expected direction.</p>
     </section>
 
     <!-- Positioning at a glance -->
@@ -91,7 +91,7 @@
       <div class="dv-stat">
         <span class="ds-label">Put / Call Ratio · Volume</span>
         <span class="dv-stat-value" id="dvPcVol">—</span>
-        <span class="rv-sub">today's turnover</span>
+        <span class="rv-sub">session turnover</span>
       </div>
       <div class="dv-stat">
         <span class="ds-label">Max Pain</span>
@@ -108,7 +108,7 @@
     <!-- Open interest walls: the levels that act as magnets/barriers -->
     <section class="panel">
       <h2>Open Interest by Strike</h2>
-      <p class="section-sub">Strikes carrying large put open interest often act as support — that's where the market has the most at stake. See Data Coverage below for which side our feed publishes.</p>
+      <p class="section-sub">Strikes carrying large open interest tend to act as support (puts) or resistance (calls) — that's where the market has the most at stake.</p>
       <div class="dv-oi-chart" id="dvOiChart">
         <p class="ds-range-note">Loading…</p>
       </div>
@@ -179,7 +179,7 @@
               <tr><td>Call IV</td><td id="dvCallIv">—</td></tr>
               <tr><td>Put IV</td><td id="dvPutIv">—</td></tr>
               <tr><td>Chain Average</td><td id="dvAvgIv">—</td></tr>
-              <tr><td>Historical Vol</td><td id="dvHistVol">—</td></tr>
+              <tr><td>ATM IV</td><td id="dvHistVol">—</td></tr>
             </tbody>
           </table>
         </div>
@@ -191,7 +191,7 @@
         </div>
 
         <div class="panel">
-          <h3>Data Coverage</h3>
+          <h3>Data Timing</h3>
           <p class="dv-help" id="dvCoverage">Loading…</p>
         </div>
       </aside>

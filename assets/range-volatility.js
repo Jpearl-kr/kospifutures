@@ -35,11 +35,14 @@
   }
 
   Promise.all([
-    K.fetchJSON('/api/ls'),
-    K.fetchJSON('/api/options').catch(function () { return { error: true }; }),
+    K.fetchJSON('/api/krx?include=index,history,options'),
+    // 52-week high/low: derived from a year of Yahoo candles, which is
+    // cheap and accurate — KRX's per-session calls make a true 52-week
+    // window impractical to fetch on every page load.
+    K.fetchJSON('/api/quotes').catch(function () { return { error: true }; }),
   ]).then(function (results) {
     var data = results[0];
-    var opt = results[1];
+    var quotes = results[1];
 
     if (data.error) {
       K.setText('rvAsOf', 'Live data unavailable');
@@ -48,17 +51,19 @@
 
     var idx = data.index || {};
     var hist = data.history || [];
+    var opt = data.options;
+    var price = idx.close;
 
     // ---- realized vs implied -------------------------------------------
     var rv20 = realizedVol(hist, 20);
     K.setText('rvRealized20', rv20 !== null ? rv20.toFixed(1) + '%' : '—');
 
     var iv = null;
-    if (!opt.error && opt.summary) {
+    if (opt && opt.summary) {
       iv = opt.summary.averageIv;
-      // Prefer the board's own call/put IV headline when present.
-      var u = opt.underlying || {};
-      if (u.callIv && u.putIv) iv = (u.callIv + u.putIv) / 2;
+      if (opt.summary.callIv && opt.summary.putIv) {
+        iv = (opt.summary.callIv + opt.summary.putIv) / 2;
+      }
     }
     K.setText('rvImplied', iv !== null && iv !== undefined ? iv.toFixed(1) + '%' : '—');
 
@@ -116,16 +121,16 @@
       rangeHtml || '<tr><td colspan="5">No data</td></tr>';
 
     // ---- expected move --------------------------------------------------
-    if (iv && idx.price) {
+    if (iv && price) {
       var dailySigma = (iv / 100) / Math.sqrt(TRADING_DAYS);
-      var oneDay = idx.price * dailySigma;
-      var oneWeek = idx.price * dailySigma * Math.sqrt(5);
+      var oneDay = price * dailySigma;
+      var oneWeek = price * dailySigma * Math.sqrt(5);
       K.setText('rvExp1d', '±' + K.fmtNumber(oneDay) + ' pts (' + (dailySigma * 100).toFixed(2) + '%)');
       K.setText('rvExp1w', '±' + K.fmtNumber(oneWeek) + ' pts (' + (dailySigma * Math.sqrt(5) * 100).toFixed(2) + '%)');
 
-      var dte = opt.underlying && opt.underlying.daysToExpiry;
+      var dte = opt && opt.daysToExpiry;
       if (dte) {
-        var toExpiry = idx.price * dailySigma * Math.sqrt(dte);
+        var toExpiry = price * dailySigma * Math.sqrt(dte);
         K.setText('rvExpExpiry', '±' + K.fmtNumber(toExpiry) + ' pts');
         K.setText('rvDte', dte + ' days');
       }
@@ -149,24 +154,27 @@
     }
 
     // ---- 52-week position ------------------------------------------------
-    K.setText('rvYearLow', K.fmtNumber(idx.yearLow));
-    K.setText('rvYearHigh', K.fmtNumber(idx.yearHigh));
-    if (idx.yearLow && idx.yearHigh && idx.yearHigh > idx.yearLow && idx.price) {
-      var yp = ((idx.price - idx.yearLow) / (idx.yearHigh - idx.yearLow)) * 100;
-      yp = Math.max(0, Math.min(100, yp));
-      document.getElementById('rvYearMarker').style.left = yp + '%';
-      var fromHigh = ((idx.price - idx.yearHigh) / idx.yearHigh) * 100;
-      K.setText(
-        'rvYearNote',
-        yp.toFixed(0) + '% of the way up the 52-week range · ' +
-          K.fmtPercent(fromHigh) + ' from the high'
-      );
+    var k200 = quotes && !quotes.error ? (quotes.quotes || {}).kospi200 : null;
+    if (k200) {
+      K.setText('rvYearLow', K.fmtNumber(k200.weekLow52));
+      K.setText('rvYearHigh', K.fmtNumber(k200.weekHigh52));
+      if (k200.weekLow52 && k200.weekHigh52 && k200.weekHigh52 > k200.weekLow52 && price) {
+        var yp = ((price - k200.weekLow52) / (k200.weekHigh52 - k200.weekLow52)) * 100;
+        yp = Math.max(0, Math.min(100, yp));
+        document.getElementById('rvYearMarker').style.left = yp + '%';
+        var fromHigh = ((price - k200.weekHigh52) / k200.weekHigh52) * 100;
+        K.setText(
+          'rvYearNote',
+          yp.toFixed(0) + '% of the way up the 52-week range · ' +
+            K.fmtPercent(fromHigh) + ' from the high'
+        );
+      }
     }
 
     K.setText(
       'rvAsOf',
-      'Data as of ' + K.formatTimestamp(new Date()) +
-        ' — source: LS Securities Open API. Realized volatility is annualized from daily closes (252 trading days).'
+      fmtDateYmd(data.session) + ' session close · source: KRX Open API. ' +
+        'Realized volatility is annualized from daily closes (252 trading days).'
     );
   }).catch(function () {
     K.setText('rvAsOf', 'Live data unavailable');

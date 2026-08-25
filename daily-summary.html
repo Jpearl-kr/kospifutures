@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Daily Summary — KOSPI Futures</title>
-<meta name="description" content="KOSPI 200 daily summary: session range, breadth, and foreign vs. institutional flows.">
+<meta name="description" content="KOSPI 200 daily summary: session range, market breadth, and the futures basis, as of the last exchange close.">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -92,11 +92,11 @@
           <span class="ds-value" id="dsOpen">—</span>
         </div>
         <div class="ds-session-stat">
-          <span class="ds-label">High <em id="dsHighTime"></em></span>
+          <span class="ds-label">High</span>
           <span class="ds-value" id="dsHigh">—</span>
         </div>
         <div class="ds-session-stat">
-          <span class="ds-label">Low <em id="dsLowTime"></em></span>
+          <span class="ds-label">Low</span>
           <span class="ds-value" id="dsLow">—</span>
         </div>
         <div class="ds-session-stat">
@@ -147,34 +147,35 @@
           <p class="ds-range-note" id="dsBreadthNote">—</p>
         </div>
 
-        <!-- The Korea-specific view: who was actually buying -->
+        <!-- The Korea-specific view: what the futures market is pricing -->
         <div class="panel">
-          <h2>Foreign vs. Institutional Flows</h2>
-          <p class="section-sub">Net activity by investor type — a signal Korean market participants watch closely.</p>
+          <h2>Futures &amp; Basis</h2>
+          <p class="section-sub">The front-month contract's premium or discount to the index — a read on near-term positioning.</p>
           <div class="ds-flow-today">
             <div class="ds-flow-card">
-              <span class="ds-label">Foreign · today</span>
-              <span class="ds-flow-value" id="dsForeignToday">—</span>
+              <span class="ds-label">Front Month</span>
+              <span class="ds-flow-value" id="dsFutFront">—</span>
             </div>
             <div class="ds-flow-card">
-              <span class="ds-label">Institutional · today</span>
-              <span class="ds-flow-value" id="dsInstToday">—</span>
+              <span class="ds-label">Basis</span>
+              <span class="ds-flow-value" id="dsFutBasis">—</span>
             </div>
             <div class="ds-flow-card">
-              <span class="ds-label">Foreign · 5-day</span>
-              <span class="ds-flow-value" id="dsForeign5d">—</span>
+              <span class="ds-label">Open Interest</span>
+              <span class="ds-flow-value" id="dsFutOi">—</span>
             </div>
             <div class="ds-flow-card">
-              <span class="ds-label">Institutional · 5-day</span>
-              <span class="ds-flow-value" id="dsInst5d">—</span>
+              <span class="ds-label">Days to Expiry</span>
+              <span class="ds-flow-value" id="dsFutDte">—</span>
             </div>
           </div>
+          <p class="ds-range-note" id="dsFutNote">—</p>
           <div class="table-scroll">
             <table class="data-table">
               <thead>
-                <tr><th>Date</th><th>Close</th><th>Change</th><th>Foreign</th><th>Institution</th></tr>
+                <tr><th>Contract</th><th>Close</th><th>Change</th><th>Basis</th><th>Open Interest</th></tr>
               </thead>
-              <tbody id="dsFlowBody">
+              <tbody id="dsFutBody">
                 <tr><td colspan="5">Loading…</td></tr>
               </tbody>
             </table>

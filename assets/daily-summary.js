@@ -7,33 +7,16 @@
     return K.formatDateLong(s.slice(0, 4) + '-' + s.slice(4, 6) + '-' + s.slice(6, 8));
   }
 
-  function fmtTime(hhmmss) {
-    var s = String(hhmmss || '');
-    if (s.length < 4) return '';
-    return s.slice(0, 2) + ':' + s.slice(2, 4);
-  }
-
-  // Foreign/institution figures come through as net contract/share counts,
-  // so keep them as plain signed integers rather than inventing a unit.
   function fmtNet(n) {
     if (n === null || n === undefined || isNaN(n)) return '—';
     var sign = n > 0 ? '+' : '';
-    return sign + Math.round(n).toLocaleString('en-US');
+    return sign + K.fmtNumber(n);
   }
 
   function netClass(n) {
     if (n > 0) return 'up';
     if (n < 0) return 'down';
     return '';
-  }
-
-  function setNet(id, n) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = fmtNet(n);
-    el.classList.remove('up', 'down');
-    var c = netClass(n);
-    if (c) el.classList.add(c);
   }
 
   function positionMarker(id, low, high, value) {
@@ -45,7 +28,15 @@
     return pct;
   }
 
-  K.fetchJSON('/api/ls').then(function (data) {
+  Promise.all([
+    K.fetchJSON('/api/krx?include=index,history,breadth,futures'),
+    // 52-week high/low comes from a year of Yahoo candles — see
+    // range-volatility.js for why KRX itself isn't used for this.
+    K.fetchJSON('/api/quotes').catch(function () { return { error: true }; }),
+  ]).then(function (results) {
+    var data = results[0];
+    var quotes = results[1];
+
     if (data.error) {
       K.setText('dsDate', 'Data unavailable');
       K.setText('dsAsOf', 'Live data unavailable');
@@ -54,25 +45,25 @@
 
     var idx = data.index || {};
     var hist = data.history || [];
+    var breadth = data.breadth;
+    var futures = data.futures || [];
+    var prevClose = idx.close !== null && idx.change !== null ? idx.close - idx.change : null;
 
-    // ---- headline -------------------------------------------------------
-    var todayRow = hist.length ? hist[0] : null;
-    K.setText('dsDate', todayRow ? fmtDateYmd(todayRow.date) : '—');
-    K.setText('dsClose', K.fmtNumber(idx.price));
+    // ---- headline --------------------------------------------------------
+    K.setText('dsDate', fmtDateYmd(idx.date));
+    K.setText('dsClose', K.fmtNumber(idx.close));
     K.setText('dsChange', K.fmtChange(idx.change) + ' (' + K.fmtPercent(idx.changePercent) + ')');
     K.setChangeClass('dsChange', idx.change);
 
     K.setText('dsOpen', K.fmtNumber(idx.open));
     K.setText('dsHigh', K.fmtNumber(idx.high));
     K.setText('dsLow', K.fmtNumber(idx.low));
-    K.setText('dsPrevClose', K.fmtNumber(idx.prevClose));
-    K.setText('dsHighTime', fmtTime(idx.highTime));
-    K.setText('dsLowTime', fmtTime(idx.lowTime));
+    K.setText('dsPrevClose', K.fmtNumber(prevClose));
 
-    // ---- range positioning ---------------------------------------------
+    // ---- range positioning -------------------------------------------
     K.setText('dsRangeLow', K.fmtNumber(idx.low));
     K.setText('dsRangeHigh', K.fmtNumber(idx.high));
-    var dayPct = positionMarker('dsDayMarker', idx.low, idx.high, idx.price);
+    var dayPct = positionMarker('dsDayMarker', idx.low, idx.high, idx.close);
     if (dayPct !== null) {
       K.setText(
         'dsDayNote',
@@ -81,51 +72,29 @@
       );
     }
 
-    K.setText('dsYearLow', K.fmtNumber(idx.yearLow));
-    K.setText('dsYearHigh', K.fmtNumber(idx.yearHigh));
-    var yearPct = positionMarker('dsYearMarker', idx.yearLow, idx.yearHigh, idx.price);
-    if (yearPct !== null && idx.yearHigh) {
-      var fromHigh = ((idx.price - idx.yearHigh) / idx.yearHigh) * 100;
-      K.setText(
-        'dsYearNote',
-        K.fmtPercent(fromHigh) + ' from the 52-week high (' + fmtDateYmd(idx.yearHighDate) + ')' +
-          ', low set ' + fmtDateYmd(idx.yearLowDate) + '.'
-      );
-    }
-
-    // ---- breadth --------------------------------------------------------
-    // The live snapshot zeroes these out after the close, so fall back to
-    // the most recent session in the daily history that actually has counts.
-    var breadth = null;
-    if ((idx.advancing || 0) + (idx.declining || 0) > 0) {
-      breadth = { adv: idx.advancing, dec: idx.declining, unch: idx.unchanged, total: 200 };
-    } else {
-      for (var i = 0; i < hist.length; i++) {
-        var h = hist[i];
-        if ((h.advancing || 0) + (h.declining || 0) > 0) {
-          breadth = {
-            adv: h.advancing,
-            dec: h.declining,
-            unch: h.unchanged,
-            total: h.totalIssues || 200,
-            date: h.date,
-          };
-          break;
-        }
+    var k200 = quotes && !quotes.error ? (quotes.quotes || {}).kospi200 : null;
+    if (k200) {
+      K.setText('dsYearLow', K.fmtNumber(k200.weekLow52));
+      K.setText('dsYearHigh', K.fmtNumber(k200.weekHigh52));
+      var yearPct = positionMarker('dsYearMarker', k200.weekLow52, k200.weekHigh52, idx.close);
+      if (yearPct !== null && k200.weekHigh52) {
+        var fromHigh = ((idx.close - k200.weekHigh52) / k200.weekHigh52) * 100;
+        K.setText('dsYearNote', K.fmtPercent(fromHigh) + ' from the 52-week high.');
       }
     }
 
+    // ---- breadth ----------------------------------------------------------
     if (breadth) {
-      var total = breadth.adv + breadth.dec + (breadth.unch || 0);
+      var total = breadth.advancing + breadth.declining + (breadth.unchanged || 0);
       if (total > 0) {
-        document.getElementById('dsBreadthAdv').style.width = (breadth.adv / total) * 100 + '%';
-        document.getElementById('dsBreadthUnch').style.width = ((breadth.unch || 0) / total) * 100 + '%';
-        document.getElementById('dsBreadthDec').style.width = (breadth.dec / total) * 100 + '%';
+        document.getElementById('dsBreadthAdv').style.width = (breadth.advancing / total) * 100 + '%';
+        document.getElementById('dsBreadthUnch').style.width = ((breadth.unchanged || 0) / total) * 100 + '%';
+        document.getElementById('dsBreadthDec').style.width = (breadth.declining / total) * 100 + '%';
       }
-      K.setText('dsAdv', String(breadth.adv));
-      K.setText('dsUnch', String(breadth.unch || 0));
-      K.setText('dsDec', String(breadth.dec));
-      var advShare = total ? (breadth.adv / total) * 100 : 0;
+      K.setText('dsAdv', String(breadth.advancing));
+      K.setText('dsUnch', String(breadth.unchanged || 0));
+      K.setText('dsDec', String(breadth.declining));
+      var advShare = total ? (breadth.advancing / total) * 100 : 0;
       K.setText(
         'dsBreadthNote',
         advShare >= 60
@@ -134,40 +103,62 @@
           ? 'Broad-based decline — most constituents fell with the index.'
           : 'Mixed session — gains and losses were fairly evenly split.'
       );
-    } else {
-      K.setText('dsBreadthNote', 'Breadth counts are published once the session closes.');
     }
 
-    // ---- flows ----------------------------------------------------------
-    if (todayRow) {
-      setNet('dsForeignToday', todayRow.foreignNet);
-      setNet('dsInstToday', todayRow.instNet);
-    }
-    var last5 = hist.slice(0, 5);
-    var sum = function (rows, key) {
-      return rows.reduce(function (a, r) { return a + (r[key] || 0); }, 0);
-    };
-    setNet('dsForeign5d', sum(last5, 'foreignNet'));
-    setNet('dsInst5d', sum(last5, 'instNet'));
+    // ---- futures & basis --------------------------------------------------
+    var withDte = futures.filter(function (f) { return f.daysToExpiry !== null && f.daysToExpiry >= 0; });
+    var frontMonth = withDte.slice().sort(function (a, b) { return a.daysToExpiry - b.daysToExpiry; })[0];
 
-    var flowBody = document.getElementById('dsFlowBody');
-    var rowsHtml = hist.slice(0, 10).map(function (r) {
-      var cls = r.change > 0 ? 'up' : r.change < 0 ? 'down' : '';
-      return '<tr><td>' + fmtDateYmd(r.date) + '</td><td>' + K.fmtNumber(r.close) +
-        '</td><td class="' + cls + '">' + K.fmtPercent(r.changePercent) +
-        '</td><td class="' + netClass(r.foreignNet) + '">' + fmtNet(r.foreignNet) +
-        '</td><td class="' + netClass(r.instNet) + '">' + fmtNet(r.instNet) + '</td></tr>';
-    }).join('');
-    flowBody.innerHTML = rowsHtml || '<tr><td colspan="5">No data</td></tr>';
+    if (frontMonth) {
+      K.setText('dsFutFront', K.fmtNumber(frontMonth.close));
+      if (frontMonth.basis !== null) {
+        K.setText('dsFutBasis', fmtNet(frontMonth.basis));
+        var basisEl = document.getElementById('dsFutBasis');
+        basisEl.classList.remove('up', 'down');
+        var bc = netClass(frontMonth.basis);
+        if (bc) basisEl.classList.add(bc);
+      }
+      K.setText('dsFutOi', frontMonth.openInterest ? K.fmtNumber(frontMonth.openInterest) : '—');
+      K.setText('dsFutDte', frontMonth.daysToExpiry + ' days');
+
+      if (frontMonth.basis !== null && frontMonth.spot && frontMonth.daysToExpiry > 0) {
+        var annualized = (frontMonth.basis / frontMonth.spot) * (365 / frontMonth.daysToExpiry) * 100;
+        K.setText(
+          'dsFutNote',
+          frontMonth.basis > 0
+            ? 'The front-month contract trades ' + K.fmtNumber(frontMonth.basis) +
+              ' points above the index (contango) — an annualized carry of about ' +
+              annualized.toFixed(1) + '%.'
+            : frontMonth.basis < 0
+            ? 'The front-month contract trades ' + K.fmtNumber(Math.abs(frontMonth.basis)) +
+              ' points below the index (backwardation) — an annualized ' +
+              Math.abs(annualized).toFixed(1) + '%, often a sign of near-term caution.'
+            : 'The front-month contract is trading in line with the index.'
+        );
+      }
+    }
+
+    var futBody = document.getElementById('dsFutBody');
+    var futRowsHtml = withDte.slice()
+      .sort(function (a, b) { return a.daysToExpiry - b.daysToExpiry; })
+      .slice(0, 4)
+      .map(function (f) {
+        var cls = f.change > 0 ? 'up' : f.change < 0 ? 'down' : '';
+        return '<tr><td>' + (f.expiry || '—') + '</td><td>' + K.fmtNumber(f.close) +
+          '</td><td class="' + cls + '">' + K.fmtChange(f.change) +
+          '</td><td class="' + netClass(f.basis) + '">' + fmtNet(f.basis) +
+          '</td><td>' + (f.openInterest ? K.fmtNumber(f.openInterest) : '—') + '</td></tr>';
+      }).join('');
+    futBody.innerHTML = futRowsHtml || '<tr><td colspan="5">No data</td></tr>';
 
     // ---- session activity ----------------------------------------------
     K.setText('dsVolume', K.fmtVolume(idx.volume));
     K.setText('dsTradingValue', K.fmtVolume(idx.tradingValue));
-    if (idx.high !== null && idx.low !== null && idx.prevClose) {
+    if (idx.high !== null && idx.low !== null && prevClose) {
       var width = idx.high - idx.low;
       K.setText(
         'dsRangeWidth',
-        K.fmtNumber(width) + ' pts (' + ((width / idx.prevClose) * 100).toFixed(2) + '%)'
+        K.fmtNumber(width) + ' pts (' + ((width / prevClose) * 100).toFixed(2) + '%)'
       );
     }
     var avgValue = hist.length
@@ -194,8 +185,7 @@
       }
       var streakEl = document.getElementById('dsStreak');
       if (streak > 0) {
-        streakEl.textContent = streak + (dir > 0 ? ' day' : ' day') + (streak > 1 ? 's' : '') +
-          (dir > 0 ? ' up' : ' down');
+        streakEl.textContent = streak + ' day' + (streak > 1 ? 's' : '') + (dir > 0 ? ' up' : ' down');
         streakEl.className = 'ds-streak ' + (dir > 0 ? 'up' : 'down');
         var cumulative = hist.slice(0, streak).reduce(function (a, r) { return a + (r.changePercent || 0); }, 0);
         K.setText('dsStreakNote', 'Cumulative move over the streak: ' + K.fmtPercent(cumulative) + '.');
@@ -217,7 +207,7 @@
       K.setText('ds20Worst', K.fmtPercent(worst.changePercent) + ' · ' + fmtDateYmd(worst.date));
     }
 
-    K.setText('dsAsOf', 'Data as of ' + K.formatTimestamp(new Date()) + ' — source: LS Securities Open API');
+    K.setText('dsAsOf', fmtDateYmd(data.session) + ' session close · source: KRX Open API');
   }).catch(function () {
     K.setText('dsDate', 'Data unavailable');
     K.setText('dsAsOf', 'Live data unavailable');
