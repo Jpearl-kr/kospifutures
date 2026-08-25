@@ -113,35 +113,58 @@ function mapIndexRow(r) {
   };
 }
 
-async function fetchHistory(basDd, days) {
-  const dates = [];
-  const cursor = new Date(
-    Number(basDd.slice(0, 4)),
-    Number(basDd.slice(4, 6)) - 1,
-    Number(basDd.slice(6, 8))
-  );
-  // Ask for more calendar days than sessions needed, to span weekends.
-  for (let i = 0; i < Math.ceil(days * 1.6); i++) {
-    dates.push(ymd(cursor));
-    cursor.setDate(cursor.getDate() - 1);
+// KRX only answers one session per call, so pulling N days of history
+// there means N individual round trips — the slowest thing this endpoint
+// could do. Yahoo's chart API returns a year of daily candles in one
+// request and (candle series, not the broken meta summary fields) has
+// already proven accurate for ^KS200 elsewhere on this site, so history
+// comes from there instead. Today's own row is still the authoritative
+// KRX close, spliced in so the hero numbers and this table always agree.
+async function fetchHistoryYahoo(days, todayRow) {
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EKS200?interval=1d&range=1y';
+  const res = await fetch(url, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; kospifutures-site/1.0)' },
+  });
+  if (!res.ok) return todayRow ? [todayRow] : [];
+
+  const json = await res.json();
+  const result = json?.chart?.result?.[0];
+  const ts = result?.timestamp || [];
+  const q = result?.indicators?.quote?.[0] || {};
+
+  const rows = [];
+  for (let i = 0; i < ts.length; i++) {
+    const close = q.close?.[i];
+    if (typeof close !== 'number') continue;
+    rows.push({
+      date: ymd(new Date(ts[i] * 1000)),
+      close,
+      open: typeof q.open?.[i] === 'number' ? q.open[i] : null,
+      high: typeof q.high?.[i] === 'number' && q.high[i] > 0 ? q.high[i] : null,
+      low: typeof q.low?.[i] === 'number' && q.low[i] > 0 ? q.low[i] : null,
+      volume: typeof q.volume?.[i] === 'number' ? q.volume[i] : null,
+    });
   }
 
-  const settled = await Promise.all(
-    dates.map(async (d) => {
-      try {
-        const rows = await callKrx('/idx/kospi_dd_trd', { basDd: d });
-        const row = rows.find((r) => bare(r.IDX_NM) === '코스피200');
-        return row && num(row.CLSPRC_IDX) !== null ? mapIndexRow(row) : null;
-      } catch (err) {
-        return null;
-      }
-    })
-  );
+  // Yahoo returns oldest-first; compute day-over-day change chronologically.
+  const withChange = rows.map((r, i) => {
+    const prev = rows[i - 1];
+    const change = prev ? r.close - prev.close : null;
+    const changePercent = prev && prev.close ? (change / prev.close) * 100 : null;
+    return {
+      date: r.date, close: r.close, change, changePercent,
+      open: r.open, high: r.high, low: r.low, volume: r.volume,
+      tradingValue: null, marketCap: null,
+    };
+  });
 
-  return settled
-    .filter(Boolean)
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, days);
+  let out = withChange.slice(-days).reverse();
+
+  if (todayRow) {
+    if (out.length && out[0].date === todayRow.date) out[0] = todayRow;
+    else out = [todayRow, ...out].slice(0, days);
+  }
+  return out;
 }
 
 async function fetchFutures(basDd) {
@@ -315,7 +338,7 @@ async function fetchBreadth(basDd) {
 module.exports = async (req, res) => {
   // The data only changes once a day, so cache hard. This keeps us far
   // inside the 10,000 calls/day quota regardless of site traffic.
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  res.setHeader('Cache-Control', 'public, s-maxage=21600, stale-while-revalidate=86400');
   res.setHeader('Content-Type', 'application/json');
 
   try {
@@ -333,7 +356,7 @@ module.exports = async (req, res) => {
     const jobs = [];
     if (include.includes('history')) {
       const days = Math.min(Number(req.query.days) || 20, 40);
-      jobs.push(fetchHistory(basDd, days).then((h) => { payload.history = h; }));
+      jobs.push(fetchHistoryYahoo(days, index).then((h) => { payload.history = h; }));
     }
     if (include.includes('futures')) {
       jobs.push(fetchFutures(basDd).then((f) => { payload.futures = f; }));
