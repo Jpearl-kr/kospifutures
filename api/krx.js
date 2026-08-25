@@ -298,6 +298,20 @@ async function fetchOptions(basDd, spot) {
   };
 }
 
+async function fetchBreadth(basDd) {
+  const rows = await callKrx('/sto/stk_bydd_trd', { basDd });
+  const kospi = rows.filter((r) => r.MKT_NM === 'KOSPI');
+  let advancing = 0, declining = 0, unchanged = 0;
+  for (const r of kospi) {
+    const pct = num(r.FLUC_RT);
+    if (pct === null) continue;
+    if (pct > 0) advancing++;
+    else if (pct < 0) declining++;
+    else unchanged++;
+  }
+  return { advancing, declining, unchanged, totalIssues: kospi.length };
+}
+
 module.exports = async (req, res) => {
   // The data only changes once a day, so cache hard. This keeps us far
   // inside the 10,000 calls/day quota regardless of site traffic.
@@ -326,6 +340,9 @@ module.exports = async (req, res) => {
     }
     if (include.includes('options')) {
       jobs.push(fetchOptions(basDd, index.close).then((o) => { payload.options = o; }));
+    }
+    if (include.includes('breadth')) {
+      jobs.push(fetchBreadth(basDd).then((b) => { payload.breadth = b; }));
     }
     await Promise.all(jobs);
 
