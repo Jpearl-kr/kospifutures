@@ -338,6 +338,27 @@ async function fetchBreadth(basDd) {
   return { advancing, declining, unchanged, totalIssues: kospi.length };
 }
 
+async function debugHistory(days, todayRow) {
+  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EKS200?interval=1d&range=1y';
+  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; kospifutures-site/1.0)' } });
+  const status = res.status;
+  const ok = res.ok;
+  let bodySnippet = null;
+  let ts = [];
+  let closeCount = 0;
+  try {
+    const json = await res.json();
+    const result = json?.chart?.result?.[0];
+    ts = result?.timestamp || [];
+    const q = result?.indicators?.quote?.[0] || {};
+    closeCount = (q.close || []).filter((c) => typeof c === 'number').length;
+    if (json?.chart?.error) bodySnippet = JSON.stringify(json.chart.error);
+  } catch (e) {
+    bodySnippet = 'parse error: ' + String(e.message || e);
+  }
+  return { status, ok, tsCount: ts.length, closeCount, bodySnippet, todayDate: todayRow ? todayRow.date : null };
+}
+
 module.exports = async (req, res) => {
   // The data only changes once a day, so cache hard. This keeps us far
   // inside the 10,000 calls/day quota regardless of site traffic.
@@ -346,6 +367,12 @@ module.exports = async (req, res) => {
 
   try {
     const { basDd, k200 } = await findLatestSession();
+
+    if (req.query.debug === 'yahoo') {
+      const dbg = await debugHistory(20, mapIndexRow(k200));
+      res.status(200).json(dbg);
+      return;
+    }
     const include = String(req.query.include || 'index');
     const index = mapIndexRow(k200);
 
