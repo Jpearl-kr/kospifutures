@@ -28,15 +28,7 @@
     return pct;
   }
 
-  Promise.all([
-    K.fetchJSON('/api/krx?include=index,history,breadth,futures'),
-    // 52-week high/low comes from a year of Yahoo candles — see
-    // range-volatility.js for why KRX itself isn't used for this.
-    K.fetchJSON('/api/quotes').catch(function () { return { error: true }; }),
-  ]).then(function (results) {
-    var data = results[0];
-    var quotes = results[1];
-
+  K.fetchJSON('/api/krx?include=index,history,breadth,futures').then(function (data) {
     if (data.error) {
       K.setText('dsDate', 'Data unavailable');
       K.setText('dsAsOf', 'Live data unavailable');
@@ -72,13 +64,13 @@
       );
     }
 
-    var k200 = quotes && !quotes.error ? (quotes.quotes || {}).kospi200 : null;
-    if (k200) {
-      K.setText('dsYearLow', K.fmtNumber(k200.weekLow52));
-      K.setText('dsYearHigh', K.fmtNumber(k200.weekHigh52));
-      var yearPct = positionMarker('dsYearMarker', k200.weekLow52, k200.weekHigh52, idx.close);
-      if (yearPct !== null && k200.weekHigh52) {
-        var fromHigh = ((idx.close - k200.weekHigh52) / k200.weekHigh52) * 100;
+    var week52 = data.week52;
+    if (week52) {
+      K.setText('dsYearLow', K.fmtNumber(week52.low));
+      K.setText('dsYearHigh', K.fmtNumber(week52.high));
+      var yearPct = positionMarker('dsYearMarker', week52.low, week52.high, idx.close);
+      if (yearPct !== null && week52.high) {
+        var fromHigh = ((idx.close - week52.high) / week52.high) * 100;
         K.setText('dsYearNote', K.fmtPercent(fromHigh) + ' from the 52-week high.');
       }
     }

@@ -120,12 +120,19 @@ function mapIndexRow(r) {
 // already proven accurate for ^KS200 elsewhere on this site, so history
 // comes from there instead. Today's own row is still the authoritative
 // KRX close, spliced in so the hero numbers and this table always agree.
-async function fetchHistoryYahoo(days, todayRow) {
+//
+// The same year of candles also covers the 52-week high/low, so it's
+// computed here too rather than as a second, separate Yahoo request —
+// this endpoint used to call Yahoo once for history and the page would
+// call /api/quotes again just for the 52-week figure, doubling the
+// number of requests hitting Yahoo's unofficial API for no reason.
+async function fetchYahooHistoryAndWeek52(days, todayRow) {
+  const empty = { history: todayRow ? [todayRow] : [], week52: null };
   const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EKS200?interval=1d&range=1y';
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; kospifutures-site/1.0)' },
   });
-  if (!res.ok) return todayRow ? [todayRow] : [];
+  if (!res.ok) return empty;
 
   const json = await res.json();
   const result = json?.chart?.result?.[0];
@@ -145,6 +152,14 @@ async function fetchHistoryYahoo(days, todayRow) {
       volume: typeof q.volume?.[i] === 'number' ? q.volume[i] : null,
     });
   }
+  if (!rows.length) return empty;
+
+  const highs = rows.map((r) => r.high).filter((v) => v !== null);
+  const lows = rows.map((r) => r.low).filter((v) => v !== null);
+  const week52 = {
+    high: highs.length && todayRow ? Math.max(Math.max(...highs), todayRow.close) : highs.length ? Math.max(...highs) : null,
+    low: lows.length && todayRow ? Math.min(Math.min(...lows), todayRow.close) : lows.length ? Math.min(...lows) : null,
+  };
 
   // Yahoo returns oldest-first; compute day-over-day change chronologically.
   const withChange = rows.map((r, i) => {
@@ -164,10 +179,10 @@ async function fetchHistoryYahoo(days, todayRow) {
   // Drop anything on or after today's KRX date; that date's row always
   // comes from the authoritative KRX close instead.
   const priorOnly = todayRow ? withChange.filter((r) => r.date < todayRow.date) : withChange;
-  let out = priorOnly.slice(-(todayRow ? days - 1 : days)).reverse();
+  let history = priorOnly.slice(-(todayRow ? days - 1 : days)).reverse();
 
-  if (todayRow) out = [todayRow, ...out].slice(0, days);
-  return out;
+  if (todayRow) history = [todayRow, ...history].slice(0, days);
+  return { history, week52 };
 }
 
 async function fetchFutures(basDd) {
@@ -338,27 +353,6 @@ async function fetchBreadth(basDd) {
   return { advancing, declining, unchanged, totalIssues: kospi.length };
 }
 
-async function debugHistory(days, todayRow) {
-  const url = 'https://query1.finance.yahoo.com/v8/finance/chart/%5EKS200?interval=1d&range=1y';
-  const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; kospifutures-site/1.0)' } });
-  const status = res.status;
-  const ok = res.ok;
-  let bodySnippet = null;
-  let ts = [];
-  let closeCount = 0;
-  try {
-    const json = await res.json();
-    const result = json?.chart?.result?.[0];
-    ts = result?.timestamp || [];
-    const q = result?.indicators?.quote?.[0] || {};
-    closeCount = (q.close || []).filter((c) => typeof c === 'number').length;
-    if (json?.chart?.error) bodySnippet = JSON.stringify(json.chart.error);
-  } catch (e) {
-    bodySnippet = 'parse error: ' + String(e.message || e);
-  }
-  return { status, ok, tsCount: ts.length, closeCount, bodySnippet, todayDate: todayRow ? todayRow.date : null };
-}
-
 module.exports = async (req, res) => {
   // The data only changes once a day, so cache hard. This keeps us far
   // inside the 10,000 calls/day quota regardless of site traffic.
@@ -367,12 +361,6 @@ module.exports = async (req, res) => {
 
   try {
     const { basDd, k200 } = await findLatestSession();
-
-    if (req.query.debug === 'yahoo') {
-      const dbg = await debugHistory(20, mapIndexRow(k200));
-      res.status(200).json(dbg);
-      return;
-    }
     const include = String(req.query.include || 'index');
     const index = mapIndexRow(k200);
 
@@ -386,7 +374,12 @@ module.exports = async (req, res) => {
     const jobs = [];
     if (include.includes('history')) {
       const days = Math.min(Number(req.query.days) || 20, 40);
-      jobs.push(fetchHistoryYahoo(days, index).then((h) => { payload.history = h; }));
+      jobs.push(
+        fetchYahooHistoryAndWeek52(days, index).then(({ history, week52 }) => {
+          payload.history = history;
+          payload.week52 = week52;
+        })
+      );
     }
     if (include.includes('futures')) {
       jobs.push(fetchFutures(basDd).then((f) => { payload.futures = f; }));

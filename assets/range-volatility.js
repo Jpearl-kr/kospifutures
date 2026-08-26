@@ -34,16 +34,7 @@
     return slice.reduce(function (a, r) { return a + Math.abs(r.changePercent); }, 0) / slice.length;
   }
 
-  Promise.all([
-    K.fetchJSON('/api/krx?include=index,history,options'),
-    // 52-week high/low: derived from a year of Yahoo candles, which is
-    // cheap and accurate — KRX's per-session calls make a true 52-week
-    // window impractical to fetch on every page load.
-    K.fetchJSON('/api/quotes').catch(function () { return { error: true }; }),
-  ]).then(function (results) {
-    var data = results[0];
-    var quotes = results[1];
-
+  K.fetchJSON('/api/krx?include=index,history,options').then(function (data) {
     if (data.error) {
       K.setText('rvAsOf', 'Live data unavailable');
       return;
@@ -154,15 +145,15 @@
     }
 
     // ---- 52-week position ------------------------------------------------
-    var k200 = quotes && !quotes.error ? (quotes.quotes || {}).kospi200 : null;
-    if (k200) {
-      K.setText('rvYearLow', K.fmtNumber(k200.weekLow52));
-      K.setText('rvYearHigh', K.fmtNumber(k200.weekHigh52));
-      if (k200.weekLow52 && k200.weekHigh52 && k200.weekHigh52 > k200.weekLow52 && price) {
-        var yp = ((price - k200.weekLow52) / (k200.weekHigh52 - k200.weekLow52)) * 100;
+    var week52 = data.week52;
+    if (week52) {
+      K.setText('rvYearLow', K.fmtNumber(week52.low));
+      K.setText('rvYearHigh', K.fmtNumber(week52.high));
+      if (week52.low && week52.high && week52.high > week52.low && price) {
+        var yp = ((price - week52.low) / (week52.high - week52.low)) * 100;
         yp = Math.max(0, Math.min(100, yp));
         document.getElementById('rvYearMarker').style.left = yp + '%';
-        var fromHigh = ((price - k200.weekHigh52) / k200.weekHigh52) * 100;
+        var fromHigh = ((price - week52.high) / week52.high) * 100;
         K.setText(
           'rvYearNote',
           yp.toFixed(0) + '% of the way up the 52-week range · ' +
