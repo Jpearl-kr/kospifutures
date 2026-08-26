@@ -158,12 +158,15 @@ async function fetchHistoryYahoo(days, todayRow) {
     };
   });
 
-  let out = withChange.slice(-days).reverse();
+  // Yahoo's "1y daily" series includes today's still-open session as its
+  // last bar — a partial candle, not a completed one, and it can be dated
+  // a day ahead of KRX's own session if fetched while Korea is mid-session.
+  // Drop anything on or after today's KRX date; that date's row always
+  // comes from the authoritative KRX close instead.
+  const priorOnly = todayRow ? withChange.filter((r) => r.date < todayRow.date) : withChange;
+  let out = priorOnly.slice(-(todayRow ? days - 1 : days)).reverse();
 
-  if (todayRow) {
-    if (out.length && out[0].date === todayRow.date) out[0] = todayRow;
-    else out = [todayRow, ...out].slice(0, days);
-  }
+  if (todayRow) out = [todayRow, ...out].slice(0, days);
   return out;
 }
 
