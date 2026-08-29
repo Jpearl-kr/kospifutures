@@ -1292,7 +1292,10 @@ main {
 
 .sb-refs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* The Updated column carries a full date + time and needs more room
+     than a one-word label like "Index" — an even 4-up split forced its
+     timestamp onto two lines. */
+  grid-template-columns: 1fr 1fr 1.15fr 1.5fr;
   gap: 1rem;
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
@@ -1301,13 +1304,40 @@ main {
   margin-bottom: 1.5rem;
 }
 
-.sb-ref { display: flex; flex-direction: column; gap: .15rem; }
+.sb-ref { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+
+.sb-ref-head {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.sb-ref-head .ds-label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0;
+}
+
+.sb-ref-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
 
 .sb-ref-value {
   font-size: 1.15rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
+}
+
+/* The full "Aug/28/2026 15:25:00 KST" timestamp is the longest value in
+   this row — keep it on one line at a slightly smaller size rather than
+   letting it wrap and throw off the row height. */
+.sb-ref-value-tight {
+  font-size: .95rem;
+  white-space: nowrap;
 }
 
 .sb-grid {
