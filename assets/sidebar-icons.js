@@ -13,6 +13,7 @@
     'derivatives.html': '<path d="M5 20V9M12 20V4M19 20v-7"/><path d="M3 20h18"/>',
     'records.html': '<path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/><path d="M8 6H5.5a2.5 2.5 0 0 0 2.5 4M16 6h2.5a2.5 2.5 0 0 1-2.5 4"/><path d="M12 13v4M9 20h6"/>',
     'winning-rate.html': '<path d="M4 19V5M4 19h16"/><path d="M8 15.5v-3M12 15.5v-7M16 15.5v-5"/>',
+    'option-strategy.html': '<path d="M4 19h16"/><path d="M4 19V5"/><path d="M7 15l4-6 3 4 4-7"/>',
     'stock-finder.html': '<circle cx="11" cy="11" r="6"/><path d="m15.5 15.5 4 4"/><path d="M8.5 12l2-2.5 2 2 2-3"/>',
     'economic-calendar.html': '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M9 3.5v3M15 3.5v3"/><path d="m8 16 2.5-2.5 2 2L16 12"/>',
     'index.html#news': '<path d="M6 8h9a2 2 0 0 1 2 2v7a2 2 0 0 0 2 2H7a2 2 0 0 1-2-2V9"/><path d="M6 8V6a2 2 0 0 1 2-2h9"/><path d="M8.5 12h6M8.5 15h4"/>',

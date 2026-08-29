@@ -1285,3 +1285,167 @@ main {
   margin: 0 0 .75rem;
   letter-spacing: .01em;
 }
+
+/* ---------------------------------------------------------------- */
+/* Strategy Builder                                                   */
+/* ---------------------------------------------------------------- */
+
+.sb-refs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-alt);
+  margin-bottom: 1.5rem;
+}
+
+.sb-ref { display: flex; flex-direction: column; gap: .15rem; }
+
+.sb-ref-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.sb-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.sb-right { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* Quote board */
+
+.sb-board-scroll {
+  max-height: 560px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.sb-board { font-size: .8rem; margin: 0; }
+.sb-board th, .sb-board td { padding: .3rem .5rem; text-align: right; }
+
+.sb-board thead th {
+  position: sticky;
+  background: var(--bg-alt);
+  z-index: 1;
+}
+.sb-board thead tr:first-child th { top: 0; }
+.sb-board thead tr:last-child th { top: 27px; }
+
+.sb-call-head { text-align: center !important; color: var(--green); }
+.sb-put-head { text-align: center !important; color: var(--red); }
+.sb-strike-head { text-align: center !important; }
+
+.sb-board .sb-strike {
+  text-align: center;
+  font-weight: 700;
+  background: var(--bg-alt);
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-board tr.sb-band td { background: var(--bg-alt); }
+.sb-board tr.sb-band .sb-strike { font-weight: 700; }
+
+.sb-board tr.sb-atm td {
+  outline: 1px solid var(--primary);
+  outline-offset: -1px;
+}
+
+.sb-price {
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.sb-price:hover,
+.sb-price:focus-visible {
+  background: var(--primary);
+  color: var(--bg);
+  outline: none;
+}
+
+.sb-dead { color: var(--text-muted); }
+
+/* Position list */
+
+.sb-positions { font-size: .85rem; }
+/* Tight enough that the six columns fit the right-hand column without
+   forcing a horizontal scroll over the primary interaction surface. */
+.sb-positions th, .sb-positions td { padding: .35rem .3rem; }
+.sb-contract { font-weight: 600; white-space: nowrap; }
+.sb-empty { color: var(--text-muted); }
+
+.sb-side {
+  border: 1px solid;
+  background: none;
+  border-radius: 999px;
+  padding: .1rem .6rem;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.sb-side.buy { color: var(--green); border-color: var(--green); }
+.sb-side.sell { color: var(--red); border-color: var(--red); }
+
+.sb-qty, .sb-entry {
+  width: 56px;
+  padding: .15rem .3rem;
+  font-size: .82rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sb-remove {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 .25rem;
+}
+.sb-remove:hover { color: var(--red); }
+
+/* Payoff chart */
+
+.sb-chart-wrap { width: 100%; }
+.sb-chart-wrap canvas { display: block; cursor: crosshair; }
+
+.sb-readout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-top: .75rem;
+  padding-top: .85rem;
+  border-top: 1px solid var(--border);
+}
+
+.sb-read { display: flex; flex-direction: column; gap: .15rem; }
+
+.sb-read-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sb-read-value.up { color: var(--green); }
+.sb-read-value.down { color: var(--red); }
+
+@media (max-width: 1100px) {
+  .sb-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .sb-refs { grid-template-columns: repeat(2, 1fr); }
+  .sb-board { font-size: .74rem; }
+  .sb-board th, .sb-board td { padding: .25rem .3rem; }
+}
