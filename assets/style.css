@@ -1292,10 +1292,7 @@ main {
 
 .sb-refs {
   display: grid;
-  /* The Updated column carries a full date + time and needs more room
-     than a one-word label like "Index" — an even 4-up split forced its
-     timestamp onto two lines. */
-  grid-template-columns: 1fr 1fr 1.15fr 1.5fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
@@ -1339,6 +1336,16 @@ main {
   font-size: .95rem;
   white-space: nowrap;
 }
+
+.sb-board-updated {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  font-size: .75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.sb-board-updated .sb-ref-icon { width: 14px; height: 14px; color: var(--text-muted); }
 
 .sb-grid {
   display: grid;

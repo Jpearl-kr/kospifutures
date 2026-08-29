@@ -131,7 +131,6 @@
     }).join('');
 
     body.innerHTML = html || '<tr><td colspan="7">No strikes in range</td></tr>';
-    K.setText('sbBoardRange', K.fmtNumber(view[view.length - 1].k, 1) + ' – ' + K.fmtNumber(view[0].k, 1));
 
     // Bring the money into view rather than starting at the top wing.
     var scroller = document.getElementById('sbBoardScroll');
