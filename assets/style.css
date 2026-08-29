@@ -1329,7 +1329,7 @@ main {
 }
 
 .sb-board { font-size: .8rem; margin: 0; }
-.sb-board th, .sb-board td { padding: .3rem .5rem; text-align: right; }
+.sb-board th, .sb-board td { padding: .3rem .5rem; text-align: right; white-space: nowrap; }
 
 .sb-board thead th {
   position: sticky;

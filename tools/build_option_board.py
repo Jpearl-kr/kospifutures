@@ -118,10 +118,15 @@ def main():
 
     rows.sort(key=lambda x: x["k"], reverse=True)
 
+    expiry = front_month(stamp.date())
+    expiry_date = second_thursday(int(expiry[:4]), int(expiry[4:]))
+    days_to_expiry = (expiry_date - stamp.date()).days
+
     payload = {
         "source": latest.name,
         "snapshot": stamp.strftime("%Y-%m-%dT%H:%M:00+09:00"),
-        "expiry": front_month(stamp.date()),
+        "expiry": expiry,
+        "daysToExpiry": days_to_expiry,
         "underlying": underlying,
         "indexPrice": index_price,
         # KOSPI 200 options are 250,000 KRW per index point.
@@ -135,7 +140,7 @@ def main():
     size_kb = OUT.stat().st_size / 1024
     print(f"source     {latest.name}")
     print(f"snapshot   {payload['snapshot']}")
-    print(f"expiry     {payload['expiry']}")
+    print(f"expiry     {payload['expiry']}  ({days_to_expiry} days)")
     print(f"underlying {underlying}   index {index_price}")
     print(f"strikes    {len(rows)}")
     print(f"wrote      {OUT.relative_to(ROOT)}  ({size_kb:.0f} KB)")

@@ -499,7 +499,12 @@
 
     K.setText('sbUnderlying', K.fmtNumber(board.underlying, 2));
     K.setText('sbIndex', K.fmtNumber(board.indexPrice, 2));
-    K.setText('sbExpiry', board.expiry.slice(0, 4) + '-' + board.expiry.slice(4));
+    K.setText(
+      'sbExpiry',
+      board.daysToExpiry !== null && board.daysToExpiry !== undefined
+        ? board.daysToExpiry + ' days'
+        : '—'
+    );
     K.setText('sbSnapshot', K.formatTimestamp(new Date(board.snapshot)));
     K.setText(
       'sbMultNote',
