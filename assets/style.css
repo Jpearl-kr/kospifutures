@@ -1378,15 +1378,30 @@ main {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.25rem;
-  align-items: start;
+  /* Stretch (not start) so the board panel matches however tall the
+     Positions + Payoff + Summary stack on the right ends up being,
+     instead of stopping at a fixed height regardless of the other side. */
+  align-items: stretch;
 }
 
 .sb-right { display: flex; flex-direction: column; gap: 1.25rem; }
 
 /* Quote board */
 
+.sb-board-panel {
+  display: flex;
+  flex-direction: column;
+  /* Content this tall (up to 41 rows unclamped) would otherwise force the
+     grid row — and so the right column too — to match it. This cap sits
+     close to the right column's typical height with no legs added, so the
+     common case reaches full parity; it only holds the board back once
+     the position list grows past that. */
+  max-height: 1080px;
+}
+
 .sb-board-scroll {
-  max-height: 560px;
+  flex: 1;
+  min-height: 240px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -1506,6 +1521,10 @@ main {
 
 @media (max-width: 1100px) {
   .sb-grid { grid-template-columns: 1fr; }
+  /* The tall cap exists to match the right column's height side-by-side —
+     once the columns stack, that's no longer relevant, and a shorter
+     panel is more comfortable than a tall one with a nested scroll area. */
+  .sb-board-panel { max-height: 560px; }
 }
 
 @media (max-width: 600px) {
