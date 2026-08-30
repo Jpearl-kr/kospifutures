@@ -18,7 +18,6 @@
     'economic-calendar.html': '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9.5h16M9 3.5v3M15 3.5v3"/><path d="m8 16 2.5-2.5 2 2L16 12"/>',
     'index.html#news': '<path d="M6 8h9a2 2 0 0 1 2 2v7a2 2 0 0 0 2 2H7a2 2 0 0 1-2-2V9"/><path d="M6 8V6a2 2 0 0 1 2-2h9"/><path d="M8.5 12h6M8.5 15h4"/>',
     'methodology.html': '<path d="M9 4v5l-4 8a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-4-8V4"/><path d="M8 4h8"/><path d="M7.5 15h9"/>',
-    'index.html#faq': '<circle cx="12" cy="12" r="8"/><path d="M9.8 9.6a2.2 2.2 0 1 1 2.9 2.1c-.5.2-.7.6-.7 1.1v.4"/><path d="M12 16.4h.01"/>',
     'index.html#about': '<circle cx="12" cy="12" r="8"/><path d="M12 11v5"/><path d="M12 8h.01"/>',
     'index.html#contact': '<rect x="3.5" y="6" width="17" height="12" rx="2"/><path d="m4 8 8 5 8-5"/>',
   };
