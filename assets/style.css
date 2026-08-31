@@ -1532,3 +1532,10 @@ main {
   .sb-board { font-size: .74rem; }
   .sb-board th, .sb-board td { padding: .25rem .3rem; }
 }
+
+.signal-disclaimer {
+  font-size: .72rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 1rem 0 0;
+}
