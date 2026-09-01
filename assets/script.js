@@ -164,14 +164,13 @@ if ('scrollRestoration' in history) {
     setText('rvDayHigh', fmtNumber(k.dayHigh, 2));
     placeOn(k.dayLow, k.dayHigh, k.price, 'rvDayFill', 'rvDayDot');
 
-    if (k.changeYTD !== null && k.changeYTD !== undefined) {
-      setText('rvYtd', fmtPercent(k.changeYTD));
-      setChangeClass('rvYtd', k.changeYTD);
+    if (k.changeSinceCycleStart !== null && k.changeSinceCycleStart !== undefined) {
+      setText('rvCycleReturn', fmtPercent(k.changeSinceCycleStart));
+      setChangeClass('rvCycleReturn', k.changeSinceCycleStart);
     }
 
-    if (k.change1M !== null && k.change1M !== undefined) {
-      setText('rv1m', fmtPercent(k.change1M));
-      setChangeClass('rv1m', k.change1M);
+    if (k.daysToExpiry !== null && k.daysToExpiry !== undefined) {
+      setText('rvExpiry', k.daysToExpiry + (k.daysToExpiry === 1 ? ' day' : ' days'));
     }
 
     if (k.streakDays !== null && k.streakDays !== undefined) {
@@ -182,10 +181,8 @@ if ('scrollRestoration' in history) {
       setChangeClass('rvStreak', k.streakDays);
     }
 
-    if (k.weekHigh52 && k.price) {
-      var fromHigh = ((k.price - k.weekHigh52) / k.weekHigh52) * 100;
-      setText('rvFromHigh', fmtPercent(fromHigh));
-      setChangeClass('rvFromHigh', fromHigh);
+    if (k.realizedVol20 !== null && k.realizedVol20 !== undefined) {
+      setText('rvRealizedVol', k.realizedVol20.toFixed(1) + '%');
     }
 
     setText('dataAsOf', stamp);
