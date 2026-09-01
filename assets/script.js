@@ -53,6 +53,14 @@ if ('scrollRestoration' in history) {
     return sign + pct.toFixed(2) + '%';
   }
 
+  function ordinal(n) {
+    var j = n % 10, k = n % 100;
+    if (j === 1 && k !== 11) return n + 'st';
+    if (j === 2 && k !== 12) return n + 'nd';
+    if (j === 3 && k !== 13) return n + 'rd';
+    return n + 'th';
+  }
+
   function setText(id, text) {
     var el = document.getElementById(id);
     if (el) el.textContent = text;
@@ -181,8 +189,18 @@ if ('scrollRestoration' in history) {
       setChangeClass('rvStreak', k.streakDays);
     }
 
-    if (k.realizedVol20 !== null && k.realizedVol20 !== undefined) {
-      setText('rvRealizedVol', k.realizedVol20.toFixed(1) + '%');
+    if (k.volPercentile !== null && k.volPercentile !== undefined) {
+      var volEl = document.getElementById('rvRealizedVol');
+      var bucket = k.volPercentile >= 67
+        ? { label: 'High', cls: 'down' }
+        : k.volPercentile <= 33
+        ? { label: 'Calm', cls: 'up' }
+        : { label: 'Elevated', cls: 'warn' };
+      setText('rvRealizedVol', bucket.label + ' · ' + ordinal(k.volPercentile) + ' pct');
+      if (volEl) {
+        volEl.classList.remove('up', 'down', 'warn');
+        volEl.classList.add(bucket.cls);
+      }
     }
 
     setText('dataAsOf', stamp);

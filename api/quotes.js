@@ -20,6 +20,23 @@ function secondThursday(year, monthIndex0) {
   }
 }
 
+// Annualized realized vol for the 21-close window ending at `endIdx`
+// (20 daily log returns), or null if the window can't be filled.
+function realizedVolAt(closes, endIdx, window = 21) {
+  if (endIdx < window - 1) return null;
+  const logReturns = [];
+  for (let i = endIdx - window + 2; i <= endIdx; i++) {
+    if (closes[i - 1] > 0 && closes[i] > 0) {
+      logReturns.push(Math.log(closes[i] / closes[i - 1]));
+    }
+  }
+  if (logReturns.length < 2) return null;
+  const mean = logReturns.reduce((a, b) => a + b, 0) / logReturns.length;
+  const variance =
+    logReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / (logReturns.length - 1);
+  return Math.sqrt(variance) * Math.sqrt(252) * 100;
+}
+
 // Where "today" sits inside the current quarterly cycle: the expiry that
 // started the front-month contract now trading, and the one that ends it.
 function quarterlyCycle(today) {
@@ -115,6 +132,7 @@ async function fetchQuote(symbol, range = '3mo') {
   let changeSinceCycleStart = null;
   let daysToExpiry = null;
   let realizedVol20 = null;
+  let volPercentile = null;
 
   if (isYear) {
     const ts = result?.timestamp || [];
@@ -158,22 +176,22 @@ async function fetchQuote(symbol, range = '3mo') {
       }
     }
 
-    // 20-day realized volatility, annualized — the same measure the full
-    // Range & Volatility page breaks out by horizon, condensed to one
-    // number as a teaser here.
+    // 20-day realized volatility, annualized, plus where that reading
+    // ranks against the whole trailing year of 20-day readings — a
+    // "how scared should you be right now" gauge in the spirit of a
+    // VIX/VKOSPI fear index, built entirely from candles already on
+    // hand rather than a separate volatility-index feed.
     if (rows.length > 21) {
-      const window = rows.slice(-21).map((r) => r.close);
-      const logReturns = [];
-      for (let i = 1; i < window.length; i++) {
-        if (window[i - 1] > 0 && window[i] > 0) {
-          logReturns.push(Math.log(window[i] / window[i - 1]));
-        }
+      const closes = rows.map((r) => r.close);
+      const series = [];
+      for (let i = 20; i < closes.length; i++) {
+        const v = realizedVolAt(closes, i);
+        if (v !== null) series.push(v);
       }
-      if (logReturns.length > 1) {
-        const mean = logReturns.reduce((a, b) => a + b, 0) / logReturns.length;
-        const variance =
-          logReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / (logReturns.length - 1);
-        realizedVol20 = Math.sqrt(variance) * Math.sqrt(252) * 100;
+      if (series.length) {
+        realizedVol20 = series[series.length - 1];
+        const below = series.filter((v) => v <= realizedVol20).length;
+        volPercentile = Math.round((below / series.length) * 100);
       }
     }
   }
@@ -192,6 +210,7 @@ async function fetchQuote(symbol, range = '3mo') {
     changeSinceCycleStart,
     daysToExpiry,
     realizedVol20,
+    volPercentile,
   };
 }
 
