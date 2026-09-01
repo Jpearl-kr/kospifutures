@@ -162,11 +162,25 @@ if ('scrollRestoration' in history) {
 
     setText('rvDayLow', fmtNumber(k.dayLow, 2));
     setText('rvDayHigh', fmtNumber(k.dayHigh, 2));
-    var dayPct = placeOn(k.dayLow, k.dayHigh, k.price, 'rvDayFill', 'rvDayDot');
+    placeOn(k.dayLow, k.dayHigh, k.price, 'rvDayFill', 'rvDayDot');
 
-    setText('rvYearLowMini', fmtNumber(k.weekLow52, 2));
-    setText('rvYearHighMini', fmtNumber(k.weekHigh52, 2));
-    placeOn(k.weekLow52, k.weekHigh52, k.price, 'rvYearFill', 'rvYearDot');
+    if (k.changeYTD !== null && k.changeYTD !== undefined) {
+      setText('rvYtd', fmtPercent(k.changeYTD));
+      setChangeClass('rvYtd', k.changeYTD);
+    }
+
+    if (k.change1M !== null && k.change1M !== undefined) {
+      setText('rv1m', fmtPercent(k.change1M));
+      setChangeClass('rv1m', k.change1M);
+    }
+
+    if (k.streakDays !== null && k.streakDays !== undefined) {
+      var streakLabel = k.streakDays === 0
+        ? 'Flat'
+        : Math.abs(k.streakDays) + (Math.abs(k.streakDays) === 1 ? ' day' : ' days') + (k.streakDays > 0 ? ' up' : ' down');
+      setText('rvStreak', streakLabel);
+      setChangeClass('rvStreak', k.streakDays);
+    }
 
     if (k.weekHigh52 && k.price) {
       var fromHigh = ((k.price - k.weekHigh52) / k.weekHigh52) * 100;
@@ -174,22 +188,6 @@ if ('scrollRestoration' in history) {
       setChangeClass('rvFromHigh', fromHigh);
     }
 
-    if (k.dayHigh && k.dayLow && k.prevClose) {
-      var width = k.dayHigh - k.dayLow;
-      setText('rvRangeToday', ((width / k.prevClose) * 100).toFixed(2) + '%');
-    }
-
-    if (dayPct !== null) {
-      setText('rvClosePos', dayPct.toFixed(0) + '%');
-      var posEl = document.getElementById('rvClosePos');
-      if (posEl) {
-        posEl.classList.remove('up', 'down');
-        if (dayPct >= 70) posEl.classList.add('up');
-        else if (dayPct <= 30) posEl.classList.add('down');
-      }
-    }
-
-    setText('rvVolume', k.volume ? Math.round(k.volume).toLocaleString('en-US') : '—');
     setText('dataAsOf', stamp);
   }
 

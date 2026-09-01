@@ -985,8 +985,9 @@ main {
   grid-template-columns: 62px auto 1fr auto;
   align-items: center;
   gap: .6rem;
-  margin-bottom: .85rem;
 }
+
+.rv-mini-row + .rv-mini-row { margin-top: .85rem; }
 .rv-mini-row:last-child { margin-bottom: 0; }
 
 .rv-mini-label {

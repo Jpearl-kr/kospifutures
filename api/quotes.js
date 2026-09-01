@@ -75,6 +75,55 @@ async function fetchQuote(symbol, range = '3mo') {
   const orCandle = (metaVal, arr) =>
     typeof metaVal === 'number' && metaVal > 0 ? metaVal : fromLastCandle(arr);
 
+  // Momentum stats below reuse the same year of candles already fetched
+  // for the 52-week range, at no extra request — only computed when a
+  // full year was actually requested, since a 3mo window can't answer
+  // "year to date" or reliably reach back a trading month.
+  let streakDays = null;
+  let changeYTD = null;
+  let change1M = null;
+
+  if (isYear) {
+    const ts = result?.timestamp || [];
+    const rows = [];
+    for (let i = 0; i < ts.length; i++) {
+      const c = q.close?.[i];
+      if (typeof c !== 'number') continue;
+      rows.push({ year: new Date(ts[i] * 1000).getUTCFullYear(), close: c });
+    }
+    // Today's own price (from meta, not the possibly-stale last candle)
+    // is the true "latest" point for these comparisons.
+    if (rows.length) rows[rows.length - 1] = { ...rows[rows.length - 1], close: price };
+
+    if (rows.length >= 2) {
+      let dir = 0, run = 0;
+      for (let i = rows.length - 1; i > 0; i--) {
+        const d = rows[i].close > rows[i - 1].close ? 1 : rows[i].close < rows[i - 1].close ? -1 : 0;
+        if (i === rows.length - 1) {
+          dir = d;
+          if (d === 0) break;
+          run = 1;
+        } else {
+          if (d !== dir) break;
+          run++;
+        }
+      }
+      streakDays = dir === 0 ? 0 : dir * run;
+    }
+
+    const thisYear = rows.length ? rows[rows.length - 1].year : null;
+    const firstOfYear = rows.find((r) => r.year === thisYear);
+    if (firstOfYear && firstOfYear.close) {
+      changeYTD = ((price - firstOfYear.close) / firstOfYear.close) * 100;
+    }
+
+    // ~21 trading days = a calendar month.
+    if (rows.length > 21) {
+      const monthAgo = rows[rows.length - 1 - 21].close;
+      if (monthAgo) change1M = ((price - monthAgo) / monthAgo) * 100;
+    }
+  }
+
   return {
     price,
     change,
@@ -85,6 +134,9 @@ async function fetchQuote(symbol, range = '3mo') {
     weekLow52,
     prevClose,
     volume: orCandle(meta.regularMarketVolume, q.volume),
+    streakDays,
+    changeYTD,
+    change1M,
   };
 }
 
