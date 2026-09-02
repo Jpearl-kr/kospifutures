@@ -20,23 +20,6 @@ function secondThursday(year, monthIndex0) {
   }
 }
 
-// Annualized realized vol for the 21-close window ending at `endIdx`
-// (20 daily log returns), or null if the window can't be filled.
-function realizedVolAt(closes, endIdx, window = 21) {
-  if (endIdx < window - 1) return null;
-  const logReturns = [];
-  for (let i = endIdx - window + 2; i <= endIdx; i++) {
-    if (closes[i - 1] > 0 && closes[i] > 0) {
-      logReturns.push(Math.log(closes[i] / closes[i - 1]));
-    }
-  }
-  if (logReturns.length < 2) return null;
-  const mean = logReturns.reduce((a, b) => a + b, 0) / logReturns.length;
-  const variance =
-    logReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / (logReturns.length - 1);
-  return Math.sqrt(variance) * Math.sqrt(252) * 100;
-}
-
 // Where "today" sits inside the current quarterly cycle: the expiry that
 // started the front-month contract now trading, and the one that ends it.
 function quarterlyCycle(today) {
@@ -123,16 +106,12 @@ async function fetchQuote(symbol, range = '3mo') {
   const orCandle = (metaVal, arr) =>
     typeof metaVal === 'number' && metaVal > 0 ? metaVal : fromLastCandle(arr);
 
-  // Momentum stats below reuse the same year of candles already fetched
-  // for the 52-week range, at no extra request — only computed when a
-  // full year was actually requested, since a 3mo window can't reach
-  // back to the start of a quarterly futures cycle or fill a 20-day
-  // realized-vol window.
-  let streakDays = null;
+  // Since-contract-start and days-to-expiry reuse the same year of
+  // candles already fetched for the 52-week range, at no extra request —
+  // only computed when a full year was actually requested, since a 3mo
+  // window can't reach back to the start of a quarterly futures cycle.
   let changeSinceCycleStart = null;
   let daysToExpiry = null;
-  let realizedVol20 = null;
-  let volPercentile = null;
 
   if (isYear) {
     const ts = result?.timestamp || [];
@@ -145,22 +124,6 @@ async function fetchQuote(symbol, range = '3mo') {
     // Today's own price (from meta, not the possibly-stale last candle)
     // is the true "latest" point for these comparisons.
     if (rows.length) rows[rows.length - 1] = { ...rows[rows.length - 1], close: price };
-
-    if (rows.length >= 2) {
-      let dir = 0, run = 0;
-      for (let i = rows.length - 1; i > 0; i--) {
-        const d = rows[i].close > rows[i - 1].close ? 1 : rows[i].close < rows[i - 1].close ? -1 : 0;
-        if (i === rows.length - 1) {
-          dir = d;
-          if (d === 0) break;
-          run = 1;
-        } else {
-          if (d !== dir) break;
-          run++;
-        }
-      }
-      streakDays = dir === 0 ? 0 : dir * run;
-    }
 
     // KOSPI 200 futures roll quarterly — measure the index against the
     // day the current front-month contract's cycle began, and count
@@ -175,25 +138,6 @@ async function fetchQuote(symbol, range = '3mo') {
         changeSinceCycleStart = ((price - startRow.close) / startRow.close) * 100;
       }
     }
-
-    // 20-day realized volatility, annualized, plus where that reading
-    // ranks against the whole trailing year of 20-day readings — a
-    // "how scared should you be right now" gauge in the spirit of a
-    // VIX/VKOSPI fear index, built entirely from candles already on
-    // hand rather than a separate volatility-index feed.
-    if (rows.length > 21) {
-      const closes = rows.map((r) => r.close);
-      const series = [];
-      for (let i = 20; i < closes.length; i++) {
-        const v = realizedVolAt(closes, i);
-        if (v !== null) series.push(v);
-      }
-      if (series.length) {
-        realizedVol20 = series[series.length - 1];
-        const below = series.filter((v) => v <= realizedVol20).length;
-        volPercentile = Math.round((below / series.length) * 100);
-      }
-    }
   }
 
   return {
@@ -206,11 +150,8 @@ async function fetchQuote(symbol, range = '3mo') {
     weekLow52,
     prevClose,
     volume: orCandle(meta.regularMarketVolume, q.volume),
-    streakDays,
     changeSinceCycleStart,
     daysToExpiry,
-    realizedVol20,
-    volPercentile,
   };
 }
 

@@ -53,14 +53,6 @@ if ('scrollRestoration' in history) {
     return sign + pct.toFixed(2) + '%';
   }
 
-  function ordinal(n) {
-    var j = n % 10, k = n % 100;
-    if (j === 1 && k !== 11) return n + 'st';
-    if (j === 2 && k !== 12) return n + 'nd';
-    if (j === 3 && k !== 13) return n + 'rd';
-    return n + 'th';
-  }
-
   function setText(id, text) {
     var el = document.getElementById(id);
     if (el) el.textContent = text;
@@ -181,29 +173,30 @@ if ('scrollRestoration' in history) {
       setText('rvExpiry', k.daysToExpiry + (k.daysToExpiry === 1 ? ' day' : ' days'));
     }
 
-    if (k.streakDays !== null && k.streakDays !== undefined) {
-      var streakLabel = k.streakDays === 0
-        ? 'Flat'
-        : Math.abs(k.streakDays) + (Math.abs(k.streakDays) === 1 ? ' day' : ' days') + (k.streakDays > 0 ? ' up' : ' down');
-      setText('rvStreak', streakLabel);
-      setChangeClass('rvStreak', k.streakDays);
-    }
-
-    if (k.volPercentile !== null && k.volPercentile !== undefined) {
-      var volEl = document.getElementById('rvRealizedVol');
-      var bucket = k.volPercentile >= 67
-        ? { label: 'High', cls: 'down' }
-        : k.volPercentile <= 33
-        ? { label: 'Calm', cls: 'up' }
-        : { label: 'Elevated', cls: 'warn' };
-      setText('rvRealizedVol', bucket.label + ' · ' + ordinal(k.volPercentile) + ' pct');
-      if (volEl) {
-        volEl.classList.remove('up', 'down', 'warn');
-        volEl.classList.add(bucket.cls);
-      }
-    }
-
     setText('dataAsOf', stamp);
   }
+
+  // Basis and open interest come from KRX's own daily futures print
+  // (the exchange publishes once per session, never intraday), fetched
+  // separately from — and in parallel with — the Yahoo-based quote above
+  // so this one extra request never blocks the hero price or ticker row.
+  function applyFuturesPanel(front) {
+    if (!front) return;
+    if (front.basis !== null && front.basis !== undefined) {
+      setText('rvBasis', fmtChange(front.basis, 2));
+      setChangeClass('rvBasis', front.basis);
+    }
+    if (front.openInterest !== null && front.openInterest !== undefined) {
+      setText('rvOpenInterest', Math.round(front.openInterest).toLocaleString('en-US'));
+    }
+  }
+
+  fetch('/api/krx?include=futures')
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      var futures = (data && data.futures) || [];
+      applyFuturesPanel(futures[0] || null);
+    })
+    .catch(function () {});
 
 })();
