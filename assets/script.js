@@ -100,12 +100,17 @@ if ('scrollRestoration' in history) {
     }
   }
 
+  // Shared with the KRX fetch below, which resolves independently and
+  // may land before or after this one.
+  var latestKospi200 = null;
+
   fetch('/api/quotes')
     .then(function (res) { return res.json(); })
     .then(function (data) {
       var q = data.quotes || {};
       var now = new Date();
       var stamp = formatTimestamp(now);
+      latestKospi200 = q.kospi200 || null;
 
       // Hero: KOSPI 200
       if (q.kospi200) {
@@ -191,13 +196,28 @@ if ('scrollRestoration' in history) {
     }
   }
 
-  // KRX's own published index change is the authoritative number for
-  // KOSPI 200 — Yahoo's mirror ticker (^KS200) has repeatedly gone
-  // stale or gappy for this specific symbol, which has produced wrong
-  // hero change/% figures. Once this (already in-flight) response
-  // lands, it overwrites whatever Yahoo showed first.
-  function applyIndexOverride(index) {
+  // KRX never publishes intraday — its latest session is one full day
+  // behind while the market is live. So this never asks KRX for "today's"
+  // number: if KRX's session already matches the date Yahoo's live price
+  // belongs to (market closed, both sources describe the same settled
+  // day), its official change/% replaces Yahoo's — a more reliable
+  // number than the mirror ticker that's produced wrong figures before.
+  // If KRX is still a session behind (market open), its last published
+  // close is exactly "yesterday's close" — used only as the reference
+  // point to compute today's change against Yahoo's live price, never as
+  // a substitute for it.
+  function applyIndexOverride(index, session) {
     if (!index || index.close === null || index.close === undefined) return;
+    var live = latestKospi200;
+
+    if (live && live.quoteDate && session && live.quoteDate > session) {
+      var change = live.price - index.close;
+      var changePercent = index.close ? (change / index.close) * 100 : null;
+      setText('mainChange', fmtChange(change, 2) + ' (' + fmtPercent(changePercent) + ')');
+      setChangeClass('mainChange', change);
+      return;
+    }
+
     setText('mainPrice', fmtNumber(index.close, 2));
     if (index.change !== null && index.change !== undefined) {
       setText('mainChange', fmtChange(index.change, 2) + ' (' + fmtPercent(index.changePercent) + ')');
@@ -210,7 +230,7 @@ if ('scrollRestoration' in history) {
     .then(function (data) {
       var futures = (data && data.futures) || [];
       applyFuturesPanel(futures[0] || null);
-      applyIndexOverride(data && data.index);
+      applyIndexOverride(data && data.index, data && data.session);
     })
     .catch(function () {});
 

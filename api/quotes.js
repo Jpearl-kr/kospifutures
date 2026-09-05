@@ -20,6 +20,20 @@ function secondThursday(year, monthIndex0) {
   }
 }
 
+// The KST calendar date (YYYYMMDD, matching KRX's own basDd format) the
+// live quote's timestamp falls on — lets the client tell whether KRX has
+// already published this same session or is still a day behind it.
+function kstDateStr(unixSeconds) {
+  if (typeof unixSeconds !== 'number') return null;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(unixSeconds * 1000));
+  const map = {};
+  parts.forEach((p) => { map[p.type] = p.value; });
+  return `${map.year}${map.month}${map.day}`;
+}
+
 // Where "today" sits inside the current quarterly cycle: the expiry that
 // started the front-month contract now trading, and the one that ends it.
 function quarterlyCycle(today) {
@@ -176,6 +190,10 @@ async function fetchQuote(symbol, range = '3mo') {
     volume: orCandle(meta.regularMarketVolume, q.volume),
     changeSinceCycleStart,
     daysToExpiry,
+    // Which KRX session (YYYYMMDD) this price belongs to — lets the client
+    // tell whether KRX has already published this same day's numbers or
+    // is still a session behind (market still live).
+    quoteDate: kstDateStr(meta.regularMarketTime),
   };
 }
 
