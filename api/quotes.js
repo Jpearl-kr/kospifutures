@@ -59,15 +59,39 @@ async function fetchQuote(symbol, range = '3mo') {
   // the prior session), which produced bogus % changes. Instead, derive
   // the real previous close from the daily candle series: the last two
   // non-null closes are today's and the prior trading day's.
-  const closes = (result?.indicators?.quote?.[0]?.close || []).filter(
-    (c) => typeof c === 'number'
-  );
+  const ts = result?.timestamp || [];
+  const closePoints = [];
+  (result?.indicators?.quote?.[0]?.close || []).forEach((c, i) => {
+    if (typeof c === 'number') closePoints.push({ time: ts[i], close: c });
+  });
+  // ^KS200 has repeatedly gone stale for weeks at a time — the whole
+  // close series stops updating while meta.regularMarketPrice keeps
+  // moving, so the "last two valid closes" can both be over a month
+  // old even though they sit only a day apart from each other. Check
+  // the newest valid point against the actual current session, not
+  // just against its neighbor, before trusting either of them.
+  let prevClose = null;
+  if (closePoints.length >= 2) {
+    const last = closePoints[closePoints.length - 1];
+    const prior = closePoints[closePoints.length - 2];
+    const nowSec = typeof meta.regularMarketTime === 'number' ? meta.regularMarketTime : Date.now() / 1000;
+    const staleDays = (nowSec - last.time) / 86400;
+    if (staleDays <= 10) prevClose = prior.close;
+  }
   // Some symbols (e.g. ^KS200) only ever return a single daily candle from
   // this endpoint regardless of the range requested, so the candle-diff
   // approach can't apply there — fall back to Yahoo's own previous-close
   // field in that case.
-  const prevClose =
-    closes.length >= 2 ? closes[closes.length - 2] : meta.chartPreviousClose ?? meta.previousClose ?? null;
+  if (prevClose === null) {
+    prevClose = meta.chartPreviousClose ?? meta.previousClose ?? null;
+  }
+  // Belt and suspenders: that fallback field has also been seen to return
+  // a value from over a year back for this ticker. A real single-session
+  // move on a broad index is never anywhere near this large, so treat an
+  // implied swing beyond it as bad data rather than display it.
+  if (prevClose !== null && Math.abs((price - prevClose) / prevClose) > 0.2) {
+    prevClose = null;
+  }
   const change = prevClose ? price - prevClose : null;
   const changePercent = prevClose ? (change / prevClose) * 100 : null;
 

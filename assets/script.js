@@ -191,11 +191,26 @@ if ('scrollRestoration' in history) {
     }
   }
 
+  // KRX's own published index change is the authoritative number for
+  // KOSPI 200 — Yahoo's mirror ticker (^KS200) has repeatedly gone
+  // stale or gappy for this specific symbol, which has produced wrong
+  // hero change/% figures. Once this (already in-flight) response
+  // lands, it overwrites whatever Yahoo showed first.
+  function applyIndexOverride(index) {
+    if (!index || index.close === null || index.close === undefined) return;
+    setText('mainPrice', fmtNumber(index.close, 2));
+    if (index.change !== null && index.change !== undefined) {
+      setText('mainChange', fmtChange(index.change, 2) + ' (' + fmtPercent(index.changePercent) + ')');
+      setChangeClass('mainChange', index.change);
+    }
+  }
+
   fetch('/api/krx?include=futures')
     .then(function (res) { return res.json(); })
     .then(function (data) {
       var futures = (data && data.futures) || [];
       applyFuturesPanel(futures[0] || null);
+      applyIndexOverride(data && data.index);
     })
     .catch(function () {});
 
