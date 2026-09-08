@@ -74,6 +74,46 @@ function secondThursday(yyyymm) {
   }
 }
 
+// Options are monthly (futures are quarterly): the front-month series
+// starts trading as front month the session after the previous month's
+// expiry, and runs to the second Thursday of its own month.
+function optionCycle(basDd) {
+  const y = Number(basDd.slice(0, 4));
+  const m = Number(basDd.slice(4, 6));
+  const asDate = new Date(y, m - 1, Number(basDd.slice(6, 8)));
+  const thisExpiry = secondThursday(basDd.slice(0, 6));
+
+  let expiry, prevExpiry;
+  if (asDate > thisExpiry) {
+    // This month's series has already settled — the live one is next month's.
+    expiry = secondThursday(ymd(new Date(y, m, 1)).slice(0, 6));
+    prevExpiry = thisExpiry;
+  } else {
+    expiry = thisExpiry;
+    prevExpiry = secondThursday(ymd(new Date(y, m - 2, 1)).slice(0, 6));
+  }
+
+  const start = new Date(prevExpiry);
+  start.setDate(start.getDate() + 1);
+  return { startDd: ymd(start), expiryDd: ymd(expiry) };
+}
+
+// Annualized stdev of daily log returns — same definition the Range &
+// Volatility page uses, so the two pages never disagree.
+function annualizedVol(closes) {
+  const returns = [];
+  for (let i = 1; i < closes.length; i++) {
+    if (closes[i - 1] > 0 && closes[i] > 0) {
+      returns.push(Math.log(closes[i] / closes[i - 1]));
+    }
+  }
+  if (returns.length < 2) return null;
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance =
+    returns.reduce((a, b) => a + (b - mean) ** 2, 0) / (returns.length - 1);
+  return Math.sqrt(variance) * Math.sqrt(252) * 100;
+}
+
 function daysBetween(fromYmd, to) {
   const from = new Date(
     Number(fromYmd.slice(0, 4)),
@@ -339,6 +379,118 @@ async function fetchOptions(basDd, spot) {
   };
 }
 
+// KRX answers exactly one session per call, so a window of history means one
+// request per weekday in it. They run in parallel and the whole response is
+// cached for six hours, so the cost lands on one visitor per cache cycle.
+// Weekends are skipped outright; holidays simply come back empty.
+async function fetchIndexWindow(fromDd, toDd) {
+  const toDate = (s) =>
+    new Date(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)));
+
+  const days = [];
+  const cur = toDate(fromDd);
+  const end = toDate(toDd);
+  while (cur <= end) {
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) days.push(ymd(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  const rows = await Promise.all(
+    days.map(async (basDd) => {
+      try {
+        const res = await callKrx('/idx/kospi_dd_trd', { basDd });
+        const k200 = res.find((r) => bare(r.IDX_NM) === '코스피200');
+        return k200 && num(k200.CLSPRC_IDX) !== null ? mapIndexRow(k200) : null;
+      } catch (err) {
+        return null;
+      }
+    })
+  );
+
+  return rows.filter(Boolean).sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+// What the option market priced for this series when it became front month,
+// against what the index has actually delivered since. Implied comes from
+// KRX's own published IV on the chain; realized is annualized from the
+// index's daily closes over exactly the same window.
+async function fetchVolCycle(basDd) {
+  const { startDd, expiryDd } = optionCycle(basDd);
+
+  // Reach back a few days before the cycle opens so the first in-cycle
+  // return has a close to measure against.
+  const anchorFrom = new Date(
+    Number(startDd.slice(0, 4)),
+    Number(startDd.slice(4, 6)) - 1,
+    Number(startDd.slice(6, 8))
+  );
+  anchorFrom.setDate(anchorFrom.getDate() - 5);
+
+  const sessions = await fetchIndexWindow(ymd(anchorFrom), basDd);
+  const inCycle = sessions.filter((s) => s.date >= startDd);
+  if (inCycle.length < 2) return null;
+
+  const priorSessions = sessions.filter((s) => s.date < startDd);
+  const anchor = priorSessions.length ? priorSessions[priorSessions.length - 1] : null;
+  const closes = (anchor ? [anchor, ...inCycle] : inCycle).map((s) => s.close);
+
+  // Realized vol as the cycle progressed — an expanding window, held back
+  // until there are enough returns for the number to mean anything.
+  const MIN_RETURNS = 5;
+  const rvPath = [];
+  for (let i = MIN_RETURNS; i < closes.length; i++) {
+    const vol = annualizedVol(closes.slice(0, i + 1));
+    if (vol !== null) {
+      rvPath.push({ date: inCycle[anchor ? i - 1 : i].date, vol });
+    }
+  }
+
+  // Implied at the start, middle and latest session of the cycle — three
+  // option-chain calls is enough to show the direction without paying for
+  // one per session.
+  const ivDates = [...new Set([
+    inCycle[0].date,
+    inCycle[Math.floor(inCycle.length / 2)].date,
+    inCycle[inCycle.length - 1].date,
+  ])];
+
+  const ivPoints = (
+    await Promise.all(
+      ivDates.map(async (date) => {
+        try {
+          const session = sessions.find((s) => s.date === date);
+          const chain = await fetchOptions(date, session ? session.close : null);
+          const s = chain && chain.summary;
+          if (!s) return null;
+          const iv =
+            s.averageIv ??
+            (s.callIv && s.putIv ? (s.callIv + s.putIv) / 2 : null);
+          return iv ? { date, iv } : null;
+        } catch (err) {
+          return null;
+        }
+      })
+    )
+  ).filter(Boolean);
+
+  const first = inCycle[0];
+  const last = inCycle[inCycle.length - 1];
+
+  return {
+    cycleStart: first.date,
+    expiry: expiryDd,
+    daysToExpiry: daysBetween(basDd, secondThursday(expiryDd.slice(0, 6))),
+    sessions: inCycle.length,
+    realized: annualizedVol(closes),
+    rvPath,
+    ivPath: ivPoints,
+    indexStart: first.close,
+    indexNow: last.close,
+    indexChangePercent: first.close ? ((last.close - first.close) / first.close) * 100 : null,
+  };
+}
+
 async function fetchBreadth(basDd) {
   const rows = await callKrx('/sto/stk_bydd_trd', { basDd });
   const kospi = rows.filter((r) => r.MKT_NM === 'KOSPI');
@@ -389,6 +541,9 @@ module.exports = async (req, res) => {
     }
     if (include.includes('breadth')) {
       jobs.push(fetchBreadth(basDd).then((b) => { payload.breadth = b; }));
+    }
+    if (include.includes('volcycle')) {
+      jobs.push(fetchVolCycle(basDd).then((v) => { payload.volCycle = v; }));
     }
     await Promise.all(jobs);
 

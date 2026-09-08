@@ -234,4 +234,177 @@ if ('scrollRestoration' in history) {
     })
     .catch(function () {});
 
+  // ---- Implied vs. realized volatility, current option series ----------
+
+  function ymdToDate(s) {
+    s = String(s);
+    return new Date(Number(s.slice(0, 4)), Number(s.slice(4, 6)) - 1, Number(s.slice(6, 8)));
+  }
+
+  function shortDate(ymd) {
+    var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var d = ymdToDate(ymd);
+    return MONTHS[d.getMonth()] + ' ' + d.getDate();
+  }
+
+  function svgEl(name, attrs) {
+    var el = document.createElementNS('http://www.w3.org/2000/svg', name);
+    Object.keys(attrs).forEach(function (k) { el.setAttribute(k, attrs[k]); });
+    return el;
+  }
+
+  // Two series on one volatility scale: realized as a continuous path (one
+  // reading per session), implied as its three sampled sessions. The
+  // implied line is dashed precisely because it is sampled, not daily —
+  // it shouldn't read as a measured path between those points.
+  function drawVolChart(vc) {
+    var svg = document.getElementById('vcChart');
+    if (!svg) return;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    var rv = vc.rvPath || [];
+    var iv = vc.ivPath || [];
+    if (!rv.length && !iv.length) return;
+
+    var W = 640, H = 210;
+    var padL = 44, padR = 54, padT = 16, padB = 26;
+    var plotW = W - padL - padR;
+    var plotH = H - padT - padB;
+
+    var t0 = ymdToDate(vc.cycleStart).getTime();
+    var t1 = ymdToDate(vc.expiry).getTime();
+    var span = t1 - t0 || 1;
+    var x = function (ymd) { return padL + ((ymdToDate(ymd).getTime() - t0) / span) * plotW; };
+
+    var vals = rv.map(function (p) { return p.vol; }).concat(iv.map(function (p) { return p.iv; }));
+    var lo = Math.min.apply(null, vals);
+    var hi = Math.max.apply(null, vals);
+    var pad = Math.max((hi - lo) * 0.2, 1);
+    lo = Math.max(0, lo - pad);
+    hi = hi + pad;
+    var y = function (v) { return padT + plotH - ((v - lo) / (hi - lo || 1)) * plotH; };
+
+    // Horizontal guides, labelled in volatility points.
+    [0, 0.5, 1].forEach(function (f) {
+      var v = lo + (hi - lo) * f;
+      var yy = y(v);
+      svg.appendChild(svgEl('line', {
+        x1: padL, x2: padL + plotW, y1: yy, y2: yy, class: 'vc-grid',
+      }));
+      var label = svgEl('text', { x: padL - 8, y: yy + 4, class: 'vc-axis', 'text-anchor': 'end' });
+      label.textContent = v.toFixed(0) + '%';
+      svg.appendChild(label);
+    });
+
+    // Expiry marker — shows how far through the series today sits.
+    svg.appendChild(svgEl('line', {
+      x1: padL + plotW, x2: padL + plotW, y1: padT, y2: padT + plotH, class: 'vc-expiry-line',
+    }));
+    var expLabel = svgEl('text', { x: padL + plotW + 6, y: padT + 10, class: 'vc-axis vc-expiry-label' });
+    expLabel.textContent = 'expiry';
+    svg.appendChild(expLabel);
+
+    var line = function (pts, cls) {
+      if (pts.length < 2) return;
+      svg.appendChild(svgEl('polyline', {
+        points: pts.map(function (p) { return p.x + ',' + p.y; }).join(' '),
+        class: cls,
+      }));
+    };
+
+    var rvPts = rv.map(function (p) { return { x: x(p.date), y: y(p.vol) }; });
+    var ivPts = iv.map(function (p) { return { x: x(p.date), y: y(p.iv) }; });
+    line(rvPts, 'vc-line-realized');
+    line(ivPts, 'vc-line-implied');
+
+    ivPts.forEach(function (p) {
+      svg.appendChild(svgEl('circle', { cx: p.x, cy: p.y, r: 3.5, class: 'vc-dot-implied' }));
+    });
+
+    // Label each series where it ends, so the chart reads without a key.
+    var endLabel = function (pts, value, cls) {
+      if (!pts.length || value === null || value === undefined) return;
+      var p = pts[pts.length - 1];
+      svg.appendChild(svgEl('circle', { cx: p.x, cy: p.y, r: 3.5, class: cls + '-dot' }));
+      var t = svgEl('text', { x: p.x + 7, y: p.y + 4, class: cls + '-label' });
+      t.textContent = value.toFixed(1) + '%';
+      svg.appendChild(t);
+    };
+    endLabel(rvPts, rv.length ? rv[rv.length - 1].vol : null, 'vc-end-realized');
+    endLabel(ivPts, iv.length ? iv[iv.length - 1].iv : null, 'vc-end-implied');
+
+    // X ends: the session the series became front month, and the last close.
+    var startText = svgEl('text', { x: padL, y: H - 8, class: 'vc-axis' });
+    startText.textContent = shortDate(vc.cycleStart);
+    svg.appendChild(startText);
+    var endText = svgEl('text', { x: padL + plotW, y: H - 8, class: 'vc-axis', 'text-anchor': 'end' });
+    endText.textContent = shortDate(vc.expiry);
+    svg.appendChild(endText);
+  }
+
+  function applyVolCycle(vc) {
+    if (!vc) {
+      setText('vcSub', 'Option series data unavailable');
+      setText('vcRead', 'The volatility comparison needs KRX’s published option chain, which is not available right now.');
+      return;
+    }
+
+    setText('vcSub',
+      'Current series: ' + shortDate(vc.cycleStart) + ' → ' + shortDate(vc.expiry) +
+      ' · ' + vc.sessions + ' sessions traded' +
+      (vc.daysToExpiry !== null && vc.daysToExpiry !== undefined
+        ? ' · ' + vc.daysToExpiry + (vc.daysToExpiry === 1 ? ' day' : ' days') + ' to expiry'
+        : ''));
+
+    drawVolChart(vc);
+
+    var iv = vc.ivPath || [];
+    var ivNow = iv.length ? iv[iv.length - 1].iv : null;
+    var ivStart = iv.length ? iv[0].iv : null;
+    var rvNow = vc.realized;
+
+    if (ivNow !== null && ivNow !== undefined) {
+      setText('vcIvNow', ivNow.toFixed(1) + '%');
+      if (ivStart !== null && ivStart !== undefined && iv.length > 1) {
+        var ivDelta = ivNow - ivStart;
+        setText('vcIvDelta', fmtChange(ivDelta, 1) + ' pts since ' + shortDate(vc.cycleStart));
+        setChangeClass('vcIvDelta', ivDelta);
+      } else {
+        setText('vcIvDelta', 'series start unavailable');
+      }
+    }
+
+    if (rvNow !== null && rvNow !== undefined) {
+      setText('vcRvNow', rvNow.toFixed(1) + '%');
+      setText('vcRvNote', 'annualized from ' + vc.sessions + ' closes');
+      if (vc.indexChangePercent !== null && vc.indexChangePercent !== undefined) {
+        setText('vcRvNote', 'index ' + fmtPercent(vc.indexChangePercent) + ' over the series');
+      }
+    }
+
+    if (ivNow !== null && ivNow !== undefined && rvNow !== null && rvNow !== undefined) {
+      var spread = ivNow - rvNow;
+      setText('vcSpread', fmtChange(spread, 1) + ' pts');
+      setChangeClass('vcSpread', spread);
+      setText('vcSpreadNote', spread > 0 ? 'options priced above delivered' : 'options priced below delivered');
+      setText('vcRead',
+        spread > 1
+          ? 'Options are pricing ' + Math.abs(spread).toFixed(1) + ' points more volatility than the index has actually delivered since this series opened — protection carries a premium.'
+          : spread < -1
+          ? 'Realized volatility is running ' + Math.abs(spread).toFixed(1) + ' points above what options are pricing — the index has moved more than the chain expected.'
+          : 'Implied and realized volatility are closely aligned — the option market and the index agree on how much this market is moving.');
+    } else if (rvNow !== null && rvNow !== undefined) {
+      // Realized landed but the option chain didn't — say so rather than
+      // leaving the loading line sitting there.
+      setText('vcRead',
+        'The index has delivered ' + rvNow.toFixed(1) + '% annualized volatility since this series opened. ' +
+        'KRX’s implied volatility for the chain is unavailable right now, so the two can’t be compared.');
+    }
+  }
+
+  fetch('/api/krx?include=volcycle')
+    .then(function (res) { return res.json(); })
+    .then(function (data) { applyVolCycle(data && data.volCycle); })
+    .catch(function () { applyVolCycle(null); });
+
 })();
