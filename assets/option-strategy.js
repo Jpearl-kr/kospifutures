@@ -490,6 +490,47 @@
   canvas = document.getElementById('sbChart');
   ctx = canvas ? canvas.getContext('2d') : null;
 
+  // KOSPI 200 options expire on the second Thursday of the contract month.
+  function secondThursday(yyyymm) {
+    var y = Number(String(yyyymm).slice(0, 4));
+    var m = Number(String(yyyymm).slice(4, 6)) - 1;
+    var d = new Date(y, m, 1);
+    var thursdays = 0;
+    while (true) {
+      if (d.getDay() === 4) {
+        thursdays++;
+        if (thursdays === 2) return d;
+      }
+      d.setDate(d.getDate() + 1);
+    }
+  }
+
+  // Counted from today, not frozen at build time. The board is a file on
+  // disk that only changes when a new export is converted, so a stored
+  // count keeps insisting "1 days" long after that series has settled —
+  // stale data claiming to be current is worse than data admitting it.
+  function expiryLabel(b) {
+    if (!b.expiry) return '—';
+    var expiry = secondThursday(b.expiry);
+    var now = new Date();
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var days = Math.round((expiry - today) / 86400000);
+    if (days < 0) return 'expired';
+    if (days === 0) return 'expires today';
+    return days + (days === 1 ? ' day' : ' days');
+  }
+
+  // How far behind the board is, in calendar days, or null if it is today's.
+  function snapshotAgeDays(b) {
+    if (!b.snapshot) return null;
+    var snap = new Date(b.snapshot);
+    if (isNaN(snap)) return null;
+    var now = new Date();
+    var snapDay = new Date(snap.getFullYear(), snap.getMonth(), snap.getDate());
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((today - snapDay) / 86400000);
+  }
+
   K.fetchJSON('assets/option-board.json').then(function (data) {
     board = data;
     for (var i = 0; i < board.strikes.length; i++) {
@@ -498,12 +539,7 @@
 
     K.setText('sbUnderlying', K.fmtNumber(board.underlying, 2));
     K.setText('sbIndex', K.fmtNumber(board.indexPrice, 2));
-    K.setText(
-      'sbExpiry',
-      board.daysToExpiry !== null && board.daysToExpiry !== undefined
-        ? board.daysToExpiry + ' days'
-        : '—'
-    );
+    K.setText('sbExpiry', expiryLabel(board));
     K.setText('sbSnapshot', K.formatTimestamp(new Date(board.snapshot)));
     K.setText(
       'sbMultNote',
@@ -516,11 +552,17 @@
     bindEvents();
     refresh();
 
-    K.setText(
-      'sbAsOf',
-      'Board snapshot ' + K.formatTimestamp(new Date(board.snapshot)) +
-        ' · ' + board.strikes.length + ' strikes on file · source: exchange quote export'
-    );
+    var age = snapshotAgeDays(board);
+    var asOf = 'Board snapshot ' + K.formatTimestamp(new Date(board.snapshot)) +
+      ' · ' + board.strikes.length + ' strikes on file · source: exchange quote export';
+    // The board only moves when a new export is converted and deployed, so
+    // say plainly when it hasn't — the quotes below are otherwise
+    // indistinguishable from live ones.
+    var stale = age !== null && age >= 1;
+    if (stale) asOf += ' · ' + age + (age === 1 ? ' day' : ' days') + ' old';
+    var asOfEl = document.getElementById('sbAsOf');
+    if (asOfEl) asOfEl.classList.toggle('sb-stale', stale);
+    K.setText('sbAsOf', asOf);
   }).catch(function () {
     K.setText('sbAsOf', 'Option board data unavailable — run tools/build_option_board.py to generate it.');
     document.getElementById('sbBoardBody').innerHTML =

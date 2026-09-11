@@ -80,9 +80,13 @@ def main():
     if not EXPORTS.is_dir():
         sys.exit(f"No exports folder at {EXPORTS}")
 
+    # rglob, not glob: exports are filed into per-day folders
+    # (exports/20260909/옵션전광판_...xlsx) as well as sitting loose at the
+    # top level, and a non-recursive glob silently finds nothing once a
+    # day's files are tidied away into its folder.
     # "~$" files are Excel's lock files, not real workbooks.
     candidates = [
-        p for p in EXPORTS.glob("옵션전광판_*.xlsx")
+        p for p in EXPORTS.rglob("옵션전광판_*.xlsx")
         if not p.name.startswith("~$") and parse_stamp(p)
     ]
     if not candidates:

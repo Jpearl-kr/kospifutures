@@ -241,6 +241,13 @@ main {
   padding: .1rem .45rem;
 }
 
+/* A board that hasn't been refreshed reads exactly like a live one, so
+   mark the age rather than leaving it as quiet grey small print. */
+.sample-tag.sb-stale {
+  color: var(--yellow-text);
+  border-color: var(--yellow-text);
+}
+
 .hero-ticker {
   display: flex;
   flex-wrap: wrap;
