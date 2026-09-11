@@ -2,3 +2,5 @@
 .env*
 *.bat
 exports/
+# Scheduled publish log (local only)
+tools/publish_option_board.log

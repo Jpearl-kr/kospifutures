@@ -29,8 +29,22 @@ $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot
 Set-Location $repo
 
-$stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-Write-Host "[$stamp] rebuilding option board in $repo"
+# Scheduled runs are windowless, so everything is mirrored to a log. A task
+# that fails quietly is how the board sat two weeks stale in the first
+# place; this is the file to read when the site stops moving.
+$logPath = Join-Path $PSScriptRoot 'publish_option_board.log'
+function Write-Log([string]$message) {
+    $line = "[{0}] {1}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $message
+    Write-Host $line
+    Add-Content -Path $logPath -Value $line -Encoding utf8
+}
+
+trap {
+    Write-Log "FAILED: $_"
+    exit 1
+}
+
+Write-Log "rebuilding option board in $repo"
 
 # py.exe is the launcher installed with Python on Windows; fall back to python.
 $python = if (Get-Command py -ErrorAction SilentlyContinue) { 'py' } else { 'python' }
@@ -41,7 +55,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 if ($NoPush) {
-    Write-Host 'NoPush set - built only, nothing committed.'
+    Write-Log 'NoPush set - built only, nothing committed.'
     exit 0
 }
 
@@ -49,7 +63,7 @@ if ($NoPush) {
 # trading day whose export never arrived leaves it byte-identical.
 $changed = git status --porcelain -- assets/option-board.json
 if (-not $changed) {
-    Write-Host 'option-board.json unchanged - no new export to publish.'
+    Write-Log 'option-board.json unchanged - no new export to publish.'
     exit 0
 }
 
@@ -69,4 +83,4 @@ if ($LASTEXITCODE -ne 0) { throw 'git commit failed' }
 git push origin $Branch
 if ($LASTEXITCODE -ne 0) { throw 'git push failed' }
 
-Write-Host "published board snapshot $snapshot to $Branch"
+Write-Log "published board snapshot $snapshot to $Branch"
